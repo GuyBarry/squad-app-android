@@ -3,4 +3,12 @@
     <string name="nav_home">Home</string>
     <string name="nav_post">Post</string>
     <string name="nav_profile">Profile</string>
+    <string name="profile_photo">Profile Photo</string>
+    <string name="profile_header">Profile</string>
+    <string name="user_name">Mayan Ams</string>
+    <string name="discord_tag">mayanamsterdam#1234</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="your_activity">Your Activity</string>
+    <string name="posts_created">Posts Created</string>
+    <string name="posts_count">0</string>
 </resources>
