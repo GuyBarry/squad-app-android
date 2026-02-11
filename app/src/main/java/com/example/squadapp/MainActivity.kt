@@ -1,7 +1,6 @@
 package com.example.squadapp
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -24,16 +23,26 @@ class MainActivity : AppCompatActivity() {
         bottomNavigation.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_home -> {
+                    replaceFragment(HomeFragment())
                     true
                 }
                 R.id.nav_post -> {
+                    replaceFragment(PostFragment())
                     true
                 }
                 R.id.nav_profile -> {
+                    replaceFragment(ProfileFragment())
                     true
                 }
                 else -> false
             }
+        }
+    }
+
+    private fun replaceFragment(fragment: androidx.fragment.app.Fragment) {
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.fragment_container, fragment)
+            commit()
         }
     }
 }
