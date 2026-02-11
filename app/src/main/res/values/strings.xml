@@ -11,4 +11,11 @@
     <string name="your_activity">Your Activity</string>
     <string name="posts_created">Posts Created</string>
     <string name="posts_count">0</string>
+    <string name="change_photo">Change Photo</string>
+    <string name="enter_user_name">Enter your name</string>
+    <string name="enter_discord_tag">Enter your Discord tag</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="user_name_label">User Name</string>
+    <string name="discord_tag_label">Discord Tag</string>
 </resources>
