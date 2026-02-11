@@ -1,0 +1,41 @@
+# --- Build Artifacts ---
+bin/
+gen/
+out/
+build/
+.gradle/
+ASL/
+
+# --- IDE Specific (Android Studio / IntelliJ) ---
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/caches/
+.idea/deploymentTargetDropDown.xml
+*.iml
+*.ipr
+*.iws
+
+# --- Local Configuration (DO NOT SHARE) ---
+local.properties
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+
+# --- Key Store / Signing (Keep these private!) ---
+*.jks
+*.keystore
+*.p12
+*.properties
+# Note: If you have a specific config properties file you NEED,
+# you can negate it with !config.properties
+
+# --- Log files ---
+*.log
+
+# --- Bundle Tool / App Bundles ---
+*.apks
+*.aab
