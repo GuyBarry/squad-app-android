@@ -4,10 +4,20 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.google.android.material.button.MaterialButton
 
 class ProfileFragment : Fragment() {
+
+    // Fake user data
+    private val currentUser = User(
+        id = 1,
+        profileImage = R.drawable.user_profile_placeholder,
+        userName = "Mayan Ams",
+        discordTag = "mayanamsterdam#1234"
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -20,8 +30,18 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Set up click listeners
+        // Get views
+        val profilePhoto = view.findViewById<ImageView>(R.id.profile_photo)
+        val userName = view.findViewById<TextView>(R.id.user_name)
+        val discordTag = view.findViewById<TextView>(R.id.discord_tag)
         val editProfileBtn = view.findViewById<MaterialButton>(R.id.edit_profile_btn)
+
+        // Populate with fake user data
+        profilePhoto.setImageResource(currentUser.profileImage)
+        userName.text = currentUser.userName
+        discordTag.text = currentUser.discordTag
+
+        // Set up edit profile button click listener
         editProfileBtn.setOnClickListener {
             parentFragmentManager.beginTransaction().apply {
                 replace(R.id.fragment_container, EditProfileFragment())
