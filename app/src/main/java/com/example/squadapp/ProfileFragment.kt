@@ -16,7 +16,8 @@ class ProfileFragment : Fragment() {
         id = 1,
         profileImage = R.drawable.user_profile_placeholder,
         username = "Mayan Ams",
-        discordTag = "mayanamsterdam#1234"
+        discordTag = "mayanamsterdam#1234",
+        password = "1234"
     )
 
     override fun onCreateView(
