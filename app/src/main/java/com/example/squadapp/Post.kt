@@ -1,9 +1,14 @@
 package com.example.squadapp
 
+import java.util.Date
+
 data class Post(
     val id: Int,
-    val postImage: Int,  // drawable resource ID
+    val image: Int,  // drawable resource ID
     val user: User,
-    val postText: String
+    val description: String,
+    val creationTime: Date
 )
+
+
 

@@ -14,15 +14,17 @@ class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdap
         val userProfileImage: ImageView = itemView.findViewById(R.id.user_profile_image)
         val userName: TextView = itemView.findViewById(R.id.user_name_text)
         val discordTag: TextView = itemView.findViewById(R.id.discord_tag_text)
+        val postTime: TextView = itemView.findViewById(R.id.post_time)
         val postText: TextView = itemView.findViewById(R.id.post_text)
         val copyDiscordBtn: com.google.android.material.button.MaterialButton = itemView.findViewById(R.id.copy_discord_btn)
 
         fun bind(post: Post) {
-            postImage.setImageResource(post.postImage)
+            postImage.setImageResource(post.image)
             userProfileImage.setImageResource(post.user.profileImage)
-            userName.text = post.user.userName
+            userName.text = post.user.username
             discordTag.text = post.user.discordTag
-            postText.text = post.postText
+            postTime.text = TimeUtils.getTimeAgoString(post.creationTime)
+            postText.text = post.description
 
             // Copy Discord tag on button click
             copyDiscordBtn.setOnClickListener {

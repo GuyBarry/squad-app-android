@@ -15,7 +15,7 @@ class ProfileFragment : Fragment() {
     private val currentUser = User(
         id = 1,
         profileImage = R.drawable.user_profile_placeholder,
-        userName = "Mayan Ams",
+        username = "Mayan Ams",
         discordTag = "mayanamsterdam#1234"
     )
 
@@ -38,7 +38,7 @@ class ProfileFragment : Fragment() {
 
         // Populate with fake user data
         profilePhoto.setImageResource(currentUser.profileImage)
-        userName.text = currentUser.userName
+        userName.text = currentUser.username
         discordTag.text = currentUser.discordTag
 
         // Set up edit profile button click listener
