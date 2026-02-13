@@ -11,6 +11,9 @@
     <string name="your_activity">Your Activity</string>
     <string name="posts_created">Posts Created</string>
     <string name="posts_count">0</string>
+    <string name="squad_header">SQUAD</string>
+    <string name="app_header">APP</string>
+    <string name="copy_discord">Copy Discord</string>
     <string name="change_photo">Change Photo</string>
     <string name="enter_user_name">Enter your name</string>
     <string name="enter_discord_tag">Enter your Discord tag</string>
