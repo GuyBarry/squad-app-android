@@ -1,11 +1,18 @@
-package com.example.squadapp
+package com.example.squadapp.entities
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import com.example.squadapp.R
+import com.example.squadapp.utils.TimeUtils
+import com.google.android.material.button.MaterialButton
 
 class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
@@ -16,7 +23,7 @@ class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdap
         val discordTag: TextView = itemView.findViewById(R.id.discord_tag_text)
         val postTime: TextView = itemView.findViewById(R.id.post_time)
         val postText: TextView = itemView.findViewById(R.id.post_text)
-        val copyDiscordBtn: com.google.android.material.button.MaterialButton = itemView.findViewById(R.id.copy_discord_btn)
+        val copyDiscordBtn: MaterialButton = itemView.findViewById(R.id.copy_discord_btn)
 
         fun bind(post: Post) {
             postImage.setImageResource(post.image)
@@ -28,11 +35,11 @@ class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdap
 
             // Copy Discord tag on button click
             copyDiscordBtn.setOnClickListener {
-                val clipboard = itemView.context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                val clip = android.content.ClipData.newPlainText("Discord Tag", post.user.discordTag)
+                val clipboard = itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("Discord Tag", post.user.discordTag)
                 clipboard.setPrimaryClip(clip)
                 // Optional: Show a toast message
-                android.widget.Toast.makeText(itemView.context, "Discord tag copied!", android.widget.Toast.LENGTH_SHORT).show()
+                Toast.makeText(itemView.context, "Discord tag copied!", Toast.LENGTH_SHORT).show()
             }
         }
     }

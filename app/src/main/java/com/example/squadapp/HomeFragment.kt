@@ -7,6 +7,11 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.squadapp.entities.Post
+import com.example.squadapp.entities.PostAdapter
+import com.example.squadapp.entities.User
+import com.example.squadapp.models.FirebaseModel
+import com.example.squadapp.models.Model
 import java.util.Date
 
 class HomeFragment : Fragment() {
@@ -16,6 +21,9 @@ class HomeFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        //TODO: try
+        Model.shared.getAllPosts { posts ->  print(posts) }
         return inflater.inflate(R.layout.fragment_home, container, false)
     }
 
@@ -30,7 +38,7 @@ class HomeFragment : Fragment() {
         val currentTime = System.currentTimeMillis()
         val samplePosts = listOf(
             Post(
-                id = 1,
+                id = "1",
                 image = R.drawable.post_image_placeholder_1,
                 user = User(
                     id = 1,
@@ -42,7 +50,7 @@ class HomeFragment : Fragment() {
                 creationTime = Date(currentTime - (2 * 3_600_000)) // 2 hours ago
             ),
             Post(
-                id = 2,
+                id = "2",
                 image = R.drawable.post_image_placeholder_2,
                 user = User(
                     id = 2,
@@ -54,7 +62,7 @@ class HomeFragment : Fragment() {
                 creationTime = Date(currentTime - (30 * 60_000)) // 30 minutes ago
             ),
             Post(
-                id = 3,
+                id = "3",
                 image = R.drawable.post_image_placeholder_3,
                 user = User(
                     id = 3,
@@ -66,7 +74,7 @@ class HomeFragment : Fragment() {
                 creationTime = Date(currentTime - (1 * 86_400_000)) // 1 day ago
             ),
             Post(
-                id = 4,
+                id = "4",
                 image = R.drawable.post_image_placeholder_4,
                 user = User(
                     id = 4,

@@ -1,4 +1,4 @@
-package com.example.squadapp
+package com.example.squadapp.entities
 
 data class User(
     val id: Int,
