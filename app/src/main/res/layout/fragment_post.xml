@@ -1,19 +1,163 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp">
+    android:background="@color/background">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Create Post"
-        android:textColor="@color/white"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:paddingTop="24dp">
 
-</LinearLayout>
+        <!-- Create Post Header -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/create_post_header"
+            android:textColor="@color/white"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:layout_marginBottom="24dp" />
 
+        <!-- Add Image Box -->
+        <FrameLayout
+            android:id="@+id/image_box_container"
+            android:layout_width="match_parent"
+            android:layout_height="250dp"
+            android:background="@drawable/post_image_box_background"
+            android:layout_marginBottom="20dp">
+
+            <!-- Image Preview -->
+            <ImageView
+                android:id="@+id/post_image_preview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                android:contentDescription="@string/image_preview" />
+
+            <!-- Image Placeholder -->
+            <LinearLayout
+                android:id="@+id/image_placeholder"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp">
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_add_circle"
+                    android:contentDescription="@string/add_image"
+                    android:layout_marginBottom="12dp"
+                    app:tint="@color/primary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tap_add_image"
+                    android:textColor="@color/primary"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/camera_or_gallery"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:alpha="0.7" />
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+        <!-- Game Dropdown -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/select_squad"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/squad_dropdown_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            app:boxBackgroundColor="#4a4a4a"
+            app:boxStrokeColor="#666666"
+            app:boxStrokeWidth="1dp"
+            app:hintTextColor="@color/primary"
+            app:expandedHintEnabled="false"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:endIconMode="dropdown_menu">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/squad_dropdown"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:inputType="none"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:gravity="center_vertical"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:dropDownHeight="850dp" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Description Box -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/add_description"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/description_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:boxBackgroundColor="#4a4a4a"
+            app:boxStrokeColor="#666666"
+            app:boxStrokeWidth="1dp"
+            app:hintTextColor="@color/primary"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/description_text"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:inputType="textMultiLine"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:gravity="top"
+                android:padding="12dp" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Publish Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/publish_btn"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/publish_post"
+            android:textColor="@color/background"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:cornerRadius="8dp"
+            app:backgroundTint="@color/primary"
+            android:layout_marginBottom="32dp" />
+
+    </LinearLayout>
+
+</ScrollView>
