@@ -1,8 +1,8 @@
 package com.example.squadapp.models
 
 import android.util.Log
-import com.example.squadapp.base.Completion
 import com.example.squadapp.base.PostsCompletion
+import com.example.squadapp.base.ResultCompletion
 import com.example.squadapp.entities.Post
 import com.example.squadapp.entities.Post.Companion.POST_CREATION_TIME
 import com.example.squadapp.entities.Post.Companion.POST_DESCRIPTION
@@ -150,17 +150,17 @@ class FirebaseModel {
         }
     }
 
-    fun addPost(post: Post, completion: Completion) {
+    fun addPost(post: Post, completion: ResultCompletion) {
         val postData = serialize(post)
 
         db.collection(POSTS).add(postData)
             .addOnSuccessListener {
-                Log.d("FirebaseModel", "Post added successfully")
-                completion()
+                Log.d("FirebaseModel", "Post added successfully with ID: ${it.id}")
+                completion(true, "Post published successfully!")
             }
             .addOnFailureListener { exception ->
                 Log.e("FirebaseModel", "Error adding post: ${exception.message}")
-                completion()
+                completion(false, "Failed to publish post: ${exception.message}")
             }
     }
 }
