@@ -120,8 +120,6 @@ class PostFragment : Fragment() {
             Toast.LENGTH_SHORT
         ).show()
 
-
-
         // Reset form
         resetForm() // TODO: maybe close the fragment and return to home page
     }
