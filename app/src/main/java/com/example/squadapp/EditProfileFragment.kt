@@ -55,7 +55,13 @@ class EditProfileFragment : Fragment() {
             val currentUser = mainActivity.currentUser
 
             // Load existing user data from MainActivity
-            profilePhoto.setImageResource(currentUser.profileImage)
+            // Use default placeholder if profile image is not set (0 or invalid)
+            val profileImageRes = if (currentUser.profileImage != 0) {
+                currentUser.profileImage
+            } else {
+                R.drawable.user_profile_placeholder
+            }
+            profilePhoto.setImageResource(profileImageRes)
             userNameInput.setText(currentUser.username)
             discordTagInput.setText(currentUser.discordTag)
         }

@@ -36,7 +36,13 @@ class ProfileFragment : Fragment() {
             val currentUser = mainActivity.currentUser
 
             // Populate with user data
-            profilePhoto.setImageResource(currentUser.profileImage)
+            // Use default placeholder if profile image is not set (0 or invalid)
+            val profileImageRes = if (currentUser.profileImage != 0) {
+                currentUser.profileImage
+            } else {
+                R.drawable.user_profile_placeholder
+            }
+            profilePhoto.setImageResource(profileImageRes)
             userName.text = currentUser.username
             discordTag.text = currentUser.discordTag
         }
