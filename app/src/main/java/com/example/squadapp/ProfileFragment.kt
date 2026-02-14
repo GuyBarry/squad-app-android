@@ -12,15 +12,6 @@ import com.google.android.material.button.MaterialButton
 
 class ProfileFragment : Fragment() {
 
-    // Fake user data
-    private val currentUser = User(
-        id = 1,
-        profileImage = R.drawable.user_profile_placeholder,
-        username = "Mayan Ams",
-        discordTag = "mayanamsterdam#1234",
-        password = "1234"
-    )
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -39,10 +30,16 @@ class ProfileFragment : Fragment() {
         val editProfileBtn = view.findViewById<MaterialButton>(R.id.edit_profile_btn)
         val logoutBtn = view.findViewById<MaterialButton>(R.id.logout_btn)
 
-        // Populate with fake user data
-        profilePhoto.setImageResource(currentUser.profileImage)
-        userName.text = currentUser.username
-        discordTag.text = currentUser.discordTag
+        // Get current user from MainActivity safely
+        val mainActivity = activity as? MainActivity
+        if (mainActivity != null) {
+            val currentUser = mainActivity.currentUser
+
+            // Populate with user data
+            profilePhoto.setImageResource(currentUser.profileImage)
+            userName.text = currentUser.username
+            discordTag.text = currentUser.discordTag
+        }
 
         // Set up edit profile button click listener
         editProfileBtn.setOnClickListener {
