@@ -1,5 +1,6 @@
 package com.example.squadapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -36,6 +37,7 @@ class ProfileFragment : Fragment() {
         val userName = view.findViewById<TextView>(R.id.user_name)
         val discordTag = view.findViewById<TextView>(R.id.discord_tag)
         val editProfileBtn = view.findViewById<MaterialButton>(R.id.edit_profile_btn)
+        val logoutBtn = view.findViewById<MaterialButton>(R.id.logout_btn)
 
         // Populate with fake user data
         profilePhoto.setImageResource(currentUser.profileImage)
@@ -49,6 +51,16 @@ class ProfileFragment : Fragment() {
                 addToBackStack(null)
                 commit()
             }
+        }
+
+        // Set up logout button click listener
+        logoutBtn.setOnClickListener {
+            //TODO: Clear user session data here (e.g., SharedPreferences, database, etc.)
+            val intent = Intent(requireContext(), AuthActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
+            requireActivity().finish()
         }
     }
 }

@@ -34,4 +34,5 @@
     <string name="save">Save</string>
     <string name="user_name_label">User Name</string>
     <string name="discord_tag_label">Discord Tag</string>
+    <string name="logout">Logout</string>
 </resources>
