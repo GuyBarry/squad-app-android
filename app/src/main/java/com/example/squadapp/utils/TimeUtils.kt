@@ -1,4 +1,4 @@
-package com.example.squadapp
+package com.example.squadapp.utils
 
 import java.util.Date
 
@@ -32,4 +32,3 @@ object TimeUtils {
         }
     }
 }
-

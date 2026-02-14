@@ -141,7 +141,7 @@
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 android:gravity="top"
-                android:padding="12dp"/>
+                android:padding="12dp" />
 
         </com.google.android.material.textfield.TextInputLayout>
 

@@ -1,11 +1,18 @@
-package com.example.squadapp
+package com.example.squadapp.entities
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import com.example.squadapp.R
+import com.example.squadapp.utils.TimeUtils
+import com.google.android.material.button.MaterialButton
 
 class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
@@ -16,18 +23,30 @@ class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdap
         val discordTag: TextView = itemView.findViewById(R.id.discord_tag_text)
         val postTime: TextView = itemView.findViewById(R.id.post_time)
         val postText: TextView = itemView.findViewById(R.id.post_text)
-        val copyDiscordBtn: com.google.android.material.button.MaterialButton = itemView.findViewById(R.id.copy_discord_btn)
+        val copyDiscordBtn: MaterialButton = itemView.findViewById(R.id.copy_discord_btn)
 
         fun bind(post: Post) {
-            postImage.setImageResource(post.image)
-
-            // Use default placeholder if profile image is not set (0 or invalid)
-            val profileImageRes = if (post.user.profileImage != 0) {
-                post.user.profileImage
-            } else {
-                R.drawable.user_profile_placeholder
+            // Safely load post image with fallback
+            try {
+                if (post.image > 0) {
+                    postImage.setImageResource(post.image)
+                } else {
+                    postImage.setImageResource(R.drawable.post_image_placeholder_1)
+                }
+            } catch (_: Exception) {
+                postImage.setImageResource(R.drawable.post_image_placeholder_1)
             }
-            userProfileImage.setImageResource(profileImageRes)
+
+            // Safely load user profile image with fallback
+            try {
+                if (post.user.profileImage > 0) {
+                    userProfileImage.setImageResource(post.user.profileImage)
+                } else {
+                    userProfileImage.setImageResource(R.drawable.user_profile_placeholder)
+                }
+            } catch (_: Exception) {
+                userProfileImage.setImageResource(R.drawable.user_profile_placeholder)
+            }
 
             userName.text = post.user.username
             discordTag.text = post.user.discordTag
@@ -36,11 +55,11 @@ class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdap
 
             // Copy Discord tag on button click
             copyDiscordBtn.setOnClickListener {
-                val clipboard = itemView.context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                val clip = android.content.ClipData.newPlainText("Discord Tag", post.user.discordTag)
+                val clipboard = itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("Discord Tag", post.user.discordTag)
                 clipboard.setPrimaryClip(clip)
                 // Optional: Show a toast message
-                android.widget.Toast.makeText(itemView.context, "Discord tag copied!", android.widget.Toast.LENGTH_SHORT).show()
+                Toast.makeText(itemView.context, "Discord tag copied!", Toast.LENGTH_SHORT).show()
             }
         }
     }
