@@ -8,6 +8,16 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
+
+    // Current user data - accessible from fragments
+    val currentUser = User(
+        id = 1,
+        profileImage = R.drawable.user_profile_placeholder,
+        username = "Mayan Ams",
+        password = "1234",
+        discordTag = "mayanamsterdam#1234"
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
