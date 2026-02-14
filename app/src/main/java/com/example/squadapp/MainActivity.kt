@@ -12,7 +12,7 @@ class MainActivity : AppCompatActivity() {
 
     // Current user data - accessible from fragments
     val currentUser = User(
-        id = 1,
+        id = "1",
         profileImage = R.drawable.user_profile_placeholder,
         username = "Mayan Ams",
         password = "1234",

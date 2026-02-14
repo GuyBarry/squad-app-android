@@ -11,8 +11,9 @@ import androidx.fragment.app.Fragment
 import com.example.squadapp.entities.User
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.squadapp.entities.PostAdapter
+import com.example.squadapp.models.Model
 import com.google.android.material.button.MaterialButton
-import java.util.Date
 
 class ProfileFragment : Fragment() {
 
@@ -76,78 +77,24 @@ class ProfileFragment : Fragment() {
         }
     }
 
-    private fun setupUserPosts(recyclerView: RecyclerView, currentUser: User, postsCountTextView: TextView) {
-        // Create sample posts (same as HomeFragment)
-        val currentTime = System.currentTimeMillis()
-        val allPosts = listOf(
-            Post(
-                id = 1,
-                image = R.drawable.post_image_placeholder_1,
-                user = User(
-                    id = 1,
-                    profileImage = R.drawable.user_profile_placeholder,
-                    username = "John Gamer",
-                    discordTag = "JohnG#5678",
-                    password = "5678"
-                ),
-                description = "Just finished an amazing gaming session! The graphics on this game are absolutely insane. Can't wait to play more tomorrow!",
-                creationTime = Date(currentTime - (2 * 3_600_000)) // 2 hours ago
-            ),
-            Post(
-                id = 2,
-                image = R.drawable.post_image_placeholder_2,
-                user = User(
-                    id = 2,
-                    profileImage = R.drawable.user_profile_placeholder,
-                    username = "Sarah Pro",
-                    discordTag = "SarahPro#1234",
-                    password = "1234"
-                ),
-                description = "New speedrun world record! 🎮 Finally beat my personal best after weeks of training. Thanks to everyone who supported me!",
-                creationTime = Date(currentTime - (30 * 60_000)) // 30 minutes ago
-            ),
-            Post(
-                id = 3,
-                image = R.drawable.post_image_placeholder_3,
-                user = User(
-                    id = 3,
-                    profileImage = R.drawable.user_profile_placeholder,
-                    username = "Mike Gaming",
-                    discordTag = "MikeG#9012",
-                    password = "9012"
-                ),
-                description = "Tournament tomorrow! Really excited to compete with the squad. Let's bring home the trophy!",
-                creationTime = Date(currentTime - (1 * 86_400_000)) // 1 day ago
-            ),
-            Post(
-                id = 4,
-                image = R.drawable.post_image_placeholder_4,
-                user = User(
-                    id = 4,
-                    profileImage = R.drawable.user_profile_placeholder,
-                    username = "Alex Stream",
-                    discordTag = "AlexS#3456",
-                    password = "3456"
-                ),
-                description = "Going live in 10 minutes! Come hang out with us for a chill gaming stream. Link in bio!",
-                creationTime = Date(currentTime - (5 * 60_000)) // 5 minutes ago
-            )
-        )
+    private fun setupUserPosts(
+        recyclerView: RecyclerView,
+        currentUser: User,
+        postsCountTextView: TextView
+    ) {
+        // Fetch all posts from Firebase
+        Model.shared.getPostsByUser(currentUser.id, { posts ->
+            // Set up RecyclerView
+            recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // Filter posts by current user
-        val userPosts = allPosts.filter { it.user.id == currentUser.id }.sortedByDescending { it.creationTime }
+            // Set adapter
+            val adapter = PostAdapter(posts)
 
+            // Update posts count
+            postsCountTextView.text = adapter.getItemCount().toString()
 
-        // Set up RecyclerView
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-
-        // Set adapter
-        val adapter = PostAdapter(userPosts)
-
-        // Update posts count
-        postsCountTextView.text = adapter.getItemCount().toString()
-
-        recyclerView.adapter = adapter
+            recyclerView.adapter = adapter
+        })
     }
 }
 
