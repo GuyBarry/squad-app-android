@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.example.squadapp.entities.User
 import com.google.android.material.button.MaterialButton
 
 class ProfileFragment : Fragment() {
