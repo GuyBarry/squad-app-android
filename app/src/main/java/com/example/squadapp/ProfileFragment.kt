@@ -1,5 +1,6 @@
 package com.example.squadapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,14 +12,6 @@ import com.example.squadapp.entities.User
 import com.google.android.material.button.MaterialButton
 
 class ProfileFragment : Fragment() {
-
-    // Fake user data
-    private val currentUser = User(
-        id = 1,
-        profileImage = R.drawable.user_profile_placeholder,
-        username = "Mayan Ams",
-        discordTag = "mayanamsterdam#1234"
-    )
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,11 +29,24 @@ class ProfileFragment : Fragment() {
         val userName = view.findViewById<TextView>(R.id.user_name)
         val discordTag = view.findViewById<TextView>(R.id.discord_tag)
         val editProfileBtn = view.findViewById<MaterialButton>(R.id.edit_profile_btn)
+        val logoutBtn = view.findViewById<MaterialButton>(R.id.logout_btn)
 
-        // Populate with fake user data
-        profilePhoto.setImageResource(currentUser.profileImage)
-        userName.text = currentUser.username
-        discordTag.text = currentUser.discordTag
+        // Get current user from MainActivity safely
+        val mainActivity = activity as? MainActivity
+        if (mainActivity != null) {
+            val currentUser = mainActivity.currentUser
+
+            // Populate with user data
+            // Use default placeholder if profile image is not set (0 or invalid)
+            val profileImageRes = if (currentUser.profileImage != 0) {
+                currentUser.profileImage
+            } else {
+                R.drawable.user_profile_placeholder
+            }
+            profilePhoto.setImageResource(profileImageRes)
+            userName.text = currentUser.username
+            discordTag.text = currentUser.discordTag
+        }
 
         // Set up edit profile button click listener
         editProfileBtn.setOnClickListener {
@@ -49,6 +55,16 @@ class ProfileFragment : Fragment() {
                 addToBackStack(null)
                 commit()
             }
+        }
+
+        // Set up logout button click listener
+        logoutBtn.setOnClickListener {
+            //TODO: Clear user session data here (e.g., SharedPreferences, database, etc.)
+            val intent = Intent(requireContext(), AuthActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
+            requireActivity().finish()
         }
     }
 }

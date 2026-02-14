@@ -44,7 +44,8 @@ class HomeFragment : Fragment() {
                     id = 1,
                     profileImage = R.drawable.user_profile_placeholder,
                     username = "John Gamer",
-                    discordTag = "JohnG#5678"
+                    discordTag = "JohnG#5678",
+                    password = "5678"
                 ),
                 description = "Just finished an amazing gaming session! The graphics on this game are absolutely insane. Can't wait to play more tomorrow!",
                 creationTime = Date(currentTime - (2 * 3_600_000)) // 2 hours ago
@@ -56,7 +57,8 @@ class HomeFragment : Fragment() {
                     id = 2,
                     profileImage = R.drawable.user_profile_placeholder,
                     username = "Sarah Pro",
-                    discordTag = "SarahPro#1234"
+                    discordTag = "SarahPro#1234",
+                    password = "1234"
                 ),
                 description = "New speedrun world record! 🎮 Finally beat my personal best after weeks of training. Thanks to everyone who supported me!",
                 creationTime = Date(currentTime - (30 * 60_000)) // 30 minutes ago
@@ -68,7 +70,8 @@ class HomeFragment : Fragment() {
                     id = 3,
                     profileImage = R.drawable.user_profile_placeholder,
                     username = "Mike Gaming",
-                    discordTag = "MikeG#9012"
+                    discordTag = "MikeG#9012",
+                    password = "9012"
                 ),
                 description = "Tournament tomorrow! Really excited to compete with the squad. Let's bring home the trophy!",
                 creationTime = Date(currentTime - (1 * 86_400_000)) // 1 day ago
@@ -80,7 +83,8 @@ class HomeFragment : Fragment() {
                     id = 4,
                     profileImage = R.drawable.user_profile_placeholder,
                     username = "Alex Stream",
-                    discordTag = "AlexS#3456"
+                    discordTag = "AlexS#3456",
+                    password = "3456"
                 ),
                 description = "Going live in 10 minutes! Come hang out with us for a chill gaming stream. Link in bio!",
                 creationTime = Date(currentTime - (5 * 60_000)) // 5 minutes ago

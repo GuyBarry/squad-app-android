@@ -27,7 +27,15 @@ class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdap
 
         fun bind(post: Post) {
             postImage.setImageResource(post.image)
-            userProfileImage.setImageResource(post.user.profileImage)
+
+            // Use default placeholder if profile image is not set (0 or invalid)
+            val profileImageRes = if (post.user.profileImage != 0) {
+                post.user.profileImage
+            } else {
+                R.drawable.user_profile_placeholder
+            }
+            userProfileImage.setImageResource(profileImageRes)
+
             userName.text = post.user.username
             discordTag.text = post.user.discordTag
             postTime.text = TimeUtils.getTimeAgoString(post.creationTime)

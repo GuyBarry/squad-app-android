@@ -1,10 +1,7 @@
 package com.example.squadapp
 
-import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -52,12 +49,22 @@ class EditProfileFragment : Fragment() {
         cancelBtn = view.findViewById(R.id.cancel_btn)
         saveBtn = view.findViewById(R.id.save_btn)
 
-        // Load existing user data
-        val currentUserName = requireContext().getString(R.string.user_name)
-        val currentDiscordTag = requireContext().getString(R.string.discord_tag)
+        // Get current user from MainActivity safely
+        val mainActivity = activity as? MainActivity
+        if (mainActivity != null) {
+            val currentUser = mainActivity.currentUser
 
-        userNameInput.setText(currentUserName)
-        discordTagInput.setText(currentDiscordTag)
+            // Load existing user data from MainActivity
+            // Use default placeholder if profile image is not set (0 or invalid)
+            val profileImageRes = if (currentUser.profileImage != 0) {
+                currentUser.profileImage
+            } else {
+                R.drawable.user_profile_placeholder
+            }
+            profilePhoto.setImageResource(profileImageRes)
+            userNameInput.setText(currentUser.username)
+            discordTagInput.setText(currentUser.discordTag)
+        }
 
         // Set up click listeners
         cameraButton.setOnClickListener {

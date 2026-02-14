@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="32dp">
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_game_controller"
+            android:contentDescription="Game Controller"
+            android:layout_marginEnd="12dp"
+            android:tint="@color/primary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sign"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" in"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="@color/white" />
+
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/signin_username"
+        android:layout_width="300dp"
+        android:layout_height="48dp"
+        android:hint="Username"
+        android:inputType="text"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/edit_text_background" />
+
+    <EditText
+        android:id="@+id/signin_password"
+        android:layout_width="300dp"
+        android:layout_height="48dp"
+        android:hint="Password"
+        android:inputType="textPassword"
+        android:padding="12dp"
+        android:layout_marginBottom="32dp"
+        android:background="@drawable/edit_text_background" />
+
+    <Button
+        android:id="@+id/signin_button"
+        android:layout_width="300dp"
+        android:layout_height="48dp"
+        android:text="Sign In"
+        android:textSize="16sp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/button_background" />
+
+    <TextView
+        android:id="@+id/signin_signup_link"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Don't have an account? Sign up here"
+        android:textSize="14sp"
+        android:textColor="@color/grey"
+        android:layout_marginTop="16dp"
+        android:padding="8dp" />
+
+</LinearLayout>
+
+
+
