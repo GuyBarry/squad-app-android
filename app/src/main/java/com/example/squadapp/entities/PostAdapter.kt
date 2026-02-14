@@ -26,15 +26,27 @@ class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdap
         val copyDiscordBtn: MaterialButton = itemView.findViewById(R.id.copy_discord_btn)
 
         fun bind(post: Post) {
-            postImage.setImageResource(post.image)
-
-            // Use default placeholder if profile image is not set (0 or invalid)
-            val profileImageRes = if (post.user.profileImage != 0) {
-                post.user.profileImage
-            } else {
-                R.drawable.user_profile_placeholder
+            // Safely load post image with fallback
+            try {
+                if (post.image > 0) {
+                    postImage.setImageResource(post.image)
+                } else {
+                    postImage.setImageResource(R.drawable.post_image_placeholder_1)
+                }
+            } catch (_: Exception) {
+                postImage.setImageResource(R.drawable.post_image_placeholder_1)
             }
-            userProfileImage.setImageResource(profileImageRes)
+
+            // Safely load user profile image with fallback
+            try {
+                if (post.user.profileImage > 0) {
+                    userProfileImage.setImageResource(post.user.profileImage)
+                } else {
+                    userProfileImage.setImageResource(R.drawable.user_profile_placeholder)
+                }
+            } catch (_: Exception) {
+                userProfileImage.setImageResource(R.drawable.user_profile_placeholder)
+            }
 
             userName.text = post.user.username
             discordTag.text = post.user.discordTag
