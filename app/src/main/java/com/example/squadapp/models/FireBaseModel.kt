@@ -13,6 +13,7 @@ import com.example.squadapp.entities.User
 import com.example.squadapp.entities.User.Companion.deserializeUser
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import com.google.firebase.Timestamp
 import java.sql.Date
 
 class FirebaseModel {
@@ -39,12 +40,16 @@ class FirebaseModel {
             val postsData = mutableListOf<Map<String, Any?>>()
 
             postDocuments.forEach { postDocument ->
+                // Properly convert Timestamp from Firebase to Date
+                    val timestamp = postDocument.get(POST_CREATION_TIME) as? Timestamp
+                val creationTime = if (null != timestamp)
+                    Date(timestamp.toDate().time) else Date(System.currentTimeMillis())
+
                 val postData = mapOf(
                     "id" to postDocument.id,
                     "image" to ((postDocument.get(POST_IMAGE) as? Long)?.toInt() ?: 0),
                     "description" to (postDocument.get(POST_DESCRIPTION) as? String ?: ""),
-                    "creationTime" to (postDocument.get(POST_CREATION_TIME) as? Date
-                        ?: Date(System.currentTimeMillis())),
+                    "creationTime" to creationTime,
                     "user" to (postDocument.get(POST_USER) as? String)
                 )
                 postsData.add(postData)

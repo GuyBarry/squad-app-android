@@ -19,11 +19,11 @@ data class Post(
         const val POST_CREATION_TIME = "creationTime"
 
         fun deserialize(json: Map<String, Any?>): Post {
-            val id = json["id"] as String
-            val image = json["image"] as Int
-            val description = json["description"] as String
-            val creationTime = json["creationTime"] as Date
-            val user = json["user"] as User
+            val id = json[POST_ID] as String
+            val image = json[POST_IMAGE] as Int
+            val description = json[POST_DESCRIPTION] as String
+            val creationTime = json[POST_CREATION_TIME] as Date
+            val user = json[POST_USER] as User
 
             return Post(
                 id = id,
