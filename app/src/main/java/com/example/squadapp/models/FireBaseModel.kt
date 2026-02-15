@@ -41,7 +41,7 @@ class FirebaseModel {
 
             postDocuments.forEach { postDocument ->
                 // Properly convert Timestamp from Firebase to Date
-                    val timestamp = postDocument.get(POST_CREATION_TIME) as? Timestamp
+                val timestamp = postDocument.get(POST_CREATION_TIME) as? Timestamp
                 val creationTime = if (null != timestamp)
                     Date(timestamp.toDate().time) else Date(System.currentTimeMillis())
 
@@ -80,7 +80,7 @@ class FirebaseModel {
                     )
 
                     // Step 5: Populate posts with user data
-                    val posts = createPostsWithUsers(filteredPostsData, usersMap).toMutableList()
+                    val posts = combinePostsWithUsers(filteredPostsData, usersMap).toMutableList()
                     posts.sortByDescending { it.creationTime }
                     Log.d(
                         "FirebaseModel",
@@ -90,7 +90,7 @@ class FirebaseModel {
                 }
             } else {
                 // No users to fetch, create posts with fallback users
-                val posts = createPostsWithUsers(postsData, emptyMap()).toMutableList()
+                val posts = combinePostsWithUsers(postsData, emptyMap()).toMutableList()
                 completion(posts)
             }
 
@@ -118,12 +118,16 @@ class FirebaseModel {
                 val postsData = mutableListOf<Map<String, Any?>>()
 
                 postDocuments.forEach { postDocument ->
+                    // Properly convert Timestamp from Firebase to Date
+                    val timestamp = postDocument.get(POST_CREATION_TIME) as? Timestamp
+                    val creationTime = if (null != timestamp)
+                        Date(timestamp.toDate().time) else Date(System.currentTimeMillis())
+
                     val postData = mapOf(
                         "id" to postDocument.id,
                         "image" to ((postDocument.get(POST_IMAGE) as? Long)?.toInt() ?: 0),
                         "description" to (postDocument.get(POST_DESCRIPTION) as? String ?: ""),
-                        "creationTime" to (postDocument.get(POST_CREATION_TIME) as? Date
-                            ?: Date(System.currentTimeMillis())),
+                        "creationTime" to creationTime,
                         "user" to (postDocument.get(POST_USER) as? String)
                     )
                     postsData.add(postData)
@@ -149,7 +153,7 @@ class FirebaseModel {
 
                         // Step 4: Create posts with user data
                         val usersMap = mapOf(userId to user)
-                        val posts = createPostsWithUsers(postsData, usersMap).toMutableList()
+                        val posts = combinePostsWithUsers(postsData, usersMap).toMutableList()
                         posts.sortByDescending { it.creationTime }
 
                         Log.d("FirebaseModel", "Successfully created ${posts.size} posts for user: $userId")
@@ -158,7 +162,7 @@ class FirebaseModel {
                     .addOnFailureListener { exception ->
                         Log.e("FirebaseModel", "Error fetching user $userId: ${exception.message}")
                         // Still create posts with fallback user
-                        val posts = createPostsWithUsers(postsData, emptyMap()).toMutableList()
+                        val posts = combinePostsWithUsers(postsData, emptyMap()).toMutableList()
                         posts.sortByDescending { it.creationTime }
                         completion(posts)
                     }
@@ -216,7 +220,7 @@ class FirebaseModel {
         }
     }
 
-    private fun createPostsWithUsers(
+    private fun combinePostsWithUsers(
         postsData: List<Map<String, Any?>>,
         usersMap: Map<String, User>
     ): List<Post> {
@@ -260,6 +264,18 @@ class FirebaseModel {
             .addOnFailureListener { exception ->
                 Log.e("FirebaseModel", "Error adding post: ${exception.message}")
                 completion(false, "Failed to publish post: ${exception.message}")
+            }
+    }
+
+    fun deletePost(postId: String, completion: ResultCompletion) {
+        db.collection(POSTS).document(postId).delete()
+            .addOnSuccessListener {
+                Log.d("FirebaseModel", "Post deleted successfully with ID: $postId")
+                completion(true, "Post deleted successfully!")
+            }
+            .addOnFailureListener { exception ->
+                Log.e("FirebaseModel", "Error deleting post: ${exception.message}")
+                completion(false, "Failed to delete post: ${exception.message}")
             }
     }
 }

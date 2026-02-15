@@ -14,7 +14,10 @@ import com.example.squadapp.R
 import com.example.squadapp.utils.TimeUtils
 import com.google.android.material.button.MaterialButton
 
-class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
+class PostAdapter(
+    private val posts: List<Post>,
+    private val onDeletePost: ((Post) -> Unit)? = null
+) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
     class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val postImage: ImageView = itemView.findViewById(R.id.post_image)
@@ -24,8 +27,9 @@ class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdap
         val postTime: TextView = itemView.findViewById(R.id.post_time)
         val postText: TextView = itemView.findViewById(R.id.post_text)
         val copyDiscordBtn: MaterialButton = itemView.findViewById(R.id.copy_discord_btn)
+        val deletePostBtn: MaterialButton = itemView.findViewById(R.id.delete_post_btn)
 
-        fun bind(post: Post) {
+        fun bind(post: Post, onDeletePost: ((Post) -> Unit)?) {
             // Safely load post image with fallback
             try {
                 if (post.image > 0) {
@@ -55,11 +59,22 @@ class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdap
 
             // Copy Discord tag on button click
             copyDiscordBtn.setOnClickListener {
-                val clipboard = itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clipboard =
+                    itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("Discord Tag", post.user.discordTag)
                 clipboard.setPrimaryClip(clip)
                 // Optional: Show a toast message
                 Toast.makeText(itemView.context, "Discord tag copied!", Toast.LENGTH_SHORT).show()
+            }
+
+            // Show/hide delete button and set click listener
+            if (onDeletePost != null) {
+                deletePostBtn.visibility = View.VISIBLE
+                deletePostBtn.setOnClickListener {
+                    onDeletePost.invoke(post)
+                }
+            } else {
+                deletePostBtn.visibility = View.GONE
             }
         }
     }
@@ -70,7 +85,7 @@ class PostAdapter(private val posts: List<Post>) : RecyclerView.Adapter<PostAdap
     }
 
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
-        holder.bind(posts[position])
+        holder.bind(posts[position], onDeletePost)
     }
 
     override fun getItemCount(): Int = posts.size

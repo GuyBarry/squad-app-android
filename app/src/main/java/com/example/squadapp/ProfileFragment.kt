@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.squadapp.entities.User
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -87,13 +88,38 @@ class ProfileFragment : Fragment() {
             // Set up RecyclerView
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-            // Set adapter
-            val adapter = PostAdapter(posts)
+            // Set adapter with delete callback
+            val adapter = PostAdapter(posts) { postToDelete ->
+                // Show confirmation and delete post
+                deletePost(postToDelete, recyclerView, currentUser, postsCountTextView)
+            }
             recyclerView.adapter = adapter
 
             // Update posts count
             postsCountTextView.text = adapter.getItemCount().toString()
         })
+    }
+
+    private fun deletePost(
+        post: com.example.squadapp.entities.Post,
+        recyclerView: RecyclerView,
+        currentUser: User,
+        postsCountTextView: TextView
+    ) {
+        // Call Model to delete the post
+        Model.shared.deletePost(post.id) { success, message ->
+            if (success) {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                // Refresh the posts list
+                setupUserPosts(recyclerView, currentUser, postsCountTextView)
+            } else {
+                Toast.makeText(
+                    requireContext(),
+                    "Failed to delete post: $message",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 }
 

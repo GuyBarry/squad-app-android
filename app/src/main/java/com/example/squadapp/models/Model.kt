@@ -23,4 +23,8 @@ class Model private constructor() {
     fun addPost(post: Post, completion: ResultCompletion) {
         firebaseModel.addPost(post, completion)
     }
+
+    fun deletePost(postId: String, completion: ResultCompletion) {
+        firebaseModel.deletePost(postId, completion)
+    }
 }
