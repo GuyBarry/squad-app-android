@@ -89,11 +89,10 @@ class ProfileFragment : Fragment() {
 
             // Set adapter
             val adapter = PostAdapter(posts)
+            recyclerView.adapter = adapter
 
             // Update posts count
             postsCountTextView.text = adapter.getItemCount().toString()
-
-            recyclerView.adapter = adapter
         })
     }
 }
