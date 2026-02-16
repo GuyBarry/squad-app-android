@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -105,7 +105,7 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="75dp"
-                android:layout_marginBottom="40dp"
+                android:layout_marginBottom="20dp"
                 android:text="@string/edit_profile"
                 android:textColor="@color/primary"
                 android:textSize="16sp"
@@ -161,9 +161,27 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
+            <!-- User Posts Section -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="20dp"
+                android:text="@string/your_posts"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- User Posts RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/user_posts_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
+
         </LinearLayout>
 
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </FrameLayout>
 

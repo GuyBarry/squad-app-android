@@ -16,7 +16,15 @@ class Model private constructor() {
         firebaseModel.getAllPosts(completion)
     }
 
+    fun getPostsByUser(userId: String, completion: PostsCompletion) {
+        firebaseModel.getPostsByUser(userId, completion)
+    }
+
     fun addPost(post: Post, completion: ResultCompletion) {
         firebaseModel.addPost(post, completion)
+    }
+
+    fun deletePost(postId: String, completion: ResultCompletion) {
+        firebaseModel.deletePost(postId, completion)
     }
 }
