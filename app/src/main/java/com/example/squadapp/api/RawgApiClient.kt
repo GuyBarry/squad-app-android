@@ -1,6 +1,7 @@
 package com.example.squadapp.api
 
 import android.util.Log
+import com.example.squadapp.BuildConfig
 import com.example.squadapp.models.RawgGamesResponse
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeUnit
 class RawgApiClient {
     companion object {
         private const val BASE_URL = "https://api.rawg.io/api/"
-        private const val API_KEY = "5b6de87c0ff245dbb48a40aeec2f5c57" // Replace with your actual API key
+        private const val API_KEY = BuildConfig.RAWG_API_KEY
         private const val TAG = "RawgApiClient"
 
         private val httpClient: OkHttpClient by lazy {
