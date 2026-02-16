@@ -25,24 +25,15 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     private lateinit var imagePreview: ImageView
     private lateinit var imagePlaceholder: android.widget.LinearLayout
     private lateinit var imageBoxContainer: android.widget.FrameLayout
-    private lateinit var squadDropdown: MaterialAutoCompleteTextView
+    private lateinit var gamesDropdown: MaterialAutoCompleteTextView
     private lateinit var descriptionText: TextInputEditText
     private lateinit var publishBtn: MaterialButton
 
     private var selectedImageUri: Uri? = null
     private var isPublishing = false
 
-    // Mock game list with objects
-    private val gameList = listOf(
-        Game("Valorant", "PC", android.R.drawable.ic_menu_view),
-        Game("Counter-Strike 2", "PC", android.R.drawable.ic_menu_view),
-        Game("League of Legends", "PC", android.R.drawable.ic_menu_view),
-        Game("Dota 2", "PC", android.R.drawable.ic_menu_view),
-        Game("Fortnite", "PC", android.R.drawable.ic_menu_view),
-        Game("Apex Legends", "PC", android.R.drawable.ic_menu_view),
-        Game("Call of Duty", "PC", android.R.drawable.ic_menu_view),
-        Game("Overwatch 2", "PC", android.R.drawable.ic_menu_view)
-    )
+    private lateinit var gameAdapter: GameAdapter
+    private val gameList = mutableListOf<Game>()
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -73,7 +64,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         imagePreview = view.findViewById(R.id.post_image_preview)
         imagePlaceholder = view.findViewById(R.id.image_placeholder)
         imageBoxContainer = view.findViewById(R.id.image_box_container)
-        squadDropdown = view.findViewById(R.id.squad_dropdown)
+        gamesDropdown = view.findViewById(R.id.games_dropdown)
         descriptionText = view.findViewById(R.id.description_text)
         publishBtn = view.findViewById(R.id.publish_btn)
 
@@ -95,16 +86,17 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     }
 
     private fun setupGameDropdown() {
-        val adapter = GameAdapter(requireContext(), gameList)
-        squadDropdown.setAdapter(adapter)
-        squadDropdown.dropDownHeight = 850
-        squadDropdown.setOnItemClickListener { _, _, position, _ ->
-            squadDropdown.setText(gameList[position].name, false)
+        gameAdapter = GameAdapter(requireContext(), gameList)
+        gamesDropdown.setAdapter(gameAdapter)
+        gamesDropdown.dropDownHeight = 850
+
+        gamesDropdown.setOnItemClickListener { _, _, position, _ ->
+            gamesDropdown.setText(gameList[position].name, false)
         }
     }
 
     private fun publishPost() {
-        val game = squadDropdown.text.toString()
+        val game = gamesDropdown.text.toString()
         val description = descriptionText.text.toString()
 
         if (game.isEmpty()) {
@@ -174,7 +166,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         imagePreview.setImageBitmap(null)
         imagePreview.visibility = View.GONE
         imagePlaceholder.visibility = View.VISIBLE
-        squadDropdown.text.clear()
+        gamesDropdown.text.clear()
         descriptionText.text?.clear()
     }
 }

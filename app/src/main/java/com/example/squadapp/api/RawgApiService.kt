@@ -1,6 +1,6 @@
 package com.example.squadapp.api
 
-import com.example.squadapp.models.RawgGamesResponse
+import com.example.squadapp.entities.RawgGamesResponse
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query

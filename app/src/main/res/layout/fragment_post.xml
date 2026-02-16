@@ -87,7 +87,7 @@
             android:layout_marginBottom="8dp" />
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/squad_dropdown_layout"
+            android:id="@+id/games_dropdown_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
@@ -100,7 +100,7 @@
             app:endIconMode="dropdown_menu">
 
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/squad_dropdown"
+                android:id="@+id/games_dropdown"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:inputType="none"

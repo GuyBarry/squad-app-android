@@ -1,4 +1,4 @@
-package com.example.squadapp.models
+package com.example.squadapp.entities
 
 import com.google.gson.annotations.SerializedName
 
