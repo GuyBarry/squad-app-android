@@ -40,10 +40,10 @@ class PostAdapter(
                 if (post.image > 0) {
                     postImage.setImageResource(post.image)
                 } else {
-                    postImage.setImageResource(R.drawable.post_image_placeholder_4)
+                    postImage.setImageResource(R.drawable.post_image_placeholder_2)
                 }
             } catch (_: Exception) {
-                postImage.setImageResource(R.drawable.post_image_placeholder_4)
+                postImage.setImageResource(R.drawable.post_image_placeholder_2)
             }
 
             // Safely load user profile image with fallback
