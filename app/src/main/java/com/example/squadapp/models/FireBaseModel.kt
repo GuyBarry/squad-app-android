@@ -365,4 +365,55 @@ class FirebaseModel {
                 completion(false, null, "Failed to sign in: ${exception.message}")
             }
     }
+
+    fun updateUser(userId: String, username: String, discordTag: String, completion: AuthCompletion) {
+        // Check if new username is already taken by another user
+        db.collection(USERS)
+            .whereEqualTo(UserDTO.USER_USERNAME, username)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val usernameExists = querySnapshot.documents.any { it.id != userId }
+
+                if (usernameExists) {
+                    Log.d("FirebaseModel", "Username already taken: $username")
+                    completion(false, null, "Username already taken")
+                } else {
+                    // Update user document
+                    val updates = hashMapOf<String, Any>(
+                        UserDTO.USER_USERNAME to username,
+                        UserDTO.USER_DISCORD_TAG to discordTag
+                    )
+
+                    db.collection(USERS).document(userId)
+                        .update(updates)
+                        .addOnSuccessListener {
+                            // Fetch updated user data
+                            db.collection(USERS).document(userId).get()
+                                .addOnSuccessListener { userDocument ->
+                                    if (userDocument.exists()) {
+                                        val userDTO = deserializeUser(userDocument.data ?: emptyMap())
+                                            .copy(id = userId)
+                                        val user = User.fromUserDTO(userDTO)
+                                        Log.d("FirebaseModel", "User updated successfully: $userId")
+                                        completion(true, user, "Profile updated successfully!")
+                                    } else {
+                                        completion(false, null, "Failed to fetch updated user data")
+                                    }
+                                }
+                                .addOnFailureListener { exception ->
+                                    Log.e("FirebaseModel", "Error fetching updated user: ${exception.message}")
+                                    completion(false, null, "Failed to fetch updated data: ${exception.message}")
+                                }
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e("FirebaseModel", "Error updating user: ${exception.message}")
+                            completion(false, null, "Failed to update profile: ${exception.message}")
+                        }
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("FirebaseModel", "Error checking username: ${exception.message}")
+                completion(false, null, "Failed to check username: ${exception.message}")
+            }
+    }
 }

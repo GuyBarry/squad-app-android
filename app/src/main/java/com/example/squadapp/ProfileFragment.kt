@@ -38,6 +38,49 @@ class ProfileFragment : Fragment() {
         val logoutBtn = view.findViewById<MaterialButton>(R.id.logout_btn)
         val userPostsRecyclerView = view.findViewById<RecyclerView>(R.id.user_posts_recycler_view)
 
+        loadUserProfile(profilePhoto, userName, discordTag, postsCount, userPostsRecyclerView)
+
+        // Set up edit profile button click listener
+        editProfileBtn.setOnClickListener {
+            parentFragmentManager.beginTransaction().apply {
+                replace(R.id.fragment_container, EditProfileFragment())
+                addToBackStack(null)
+                commit()
+            }
+        }
+
+        // Set up logout button click listener
+        logoutBtn.setOnClickListener {
+            val intent = Intent(requireContext(), AuthActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            startActivity(intent)
+            requireActivity().finish()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh user profile when returning from EditProfileFragment
+        val profilePhoto = view?.findViewById<ImageView>(R.id.profile_photo)
+        val userName = view?.findViewById<TextView>(R.id.user_name)
+        val discordTag = view?.findViewById<TextView>(R.id.discord_tag)
+        val postsCount = view?.findViewById<TextView>(R.id.posts_count)
+        val userPostsRecyclerView = view?.findViewById<RecyclerView>(R.id.user_posts_recycler_view)
+
+        if (profilePhoto != null && userName != null && discordTag != null &&
+            postsCount != null && userPostsRecyclerView != null) {
+            loadUserProfile(profilePhoto, userName, discordTag, postsCount, userPostsRecyclerView)
+        }
+    }
+
+    private fun loadUserProfile(
+        profilePhoto: ImageView,
+        userName: TextView,
+        discordTag: TextView,
+        postsCount: TextView,
+        userPostsRecyclerView: RecyclerView
+    ) {
         // Get current user from MainActivity safely
         val mainActivity = activity as? MainActivity
         if (mainActivity != null) {
@@ -56,25 +99,6 @@ class ProfileFragment : Fragment() {
 
             // Set up user posts RecyclerView
             setupUserPosts(userPostsRecyclerView, currentUser, postsCount)
-        }
-
-        // Set up edit profile button click listener
-        editProfileBtn.setOnClickListener {
-            parentFragmentManager.beginTransaction().apply {
-                replace(R.id.fragment_container, EditProfileFragment())
-                addToBackStack(null)
-                commit()
-            }
-        }
-
-        // Set up logout button click listener
-        logoutBtn.setOnClickListener {
-            //TODO: Clear user session data here (e.g., SharedPreferences, database, etc.)
-            val intent = Intent(requireContext(), AuthActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-            startActivity(intent)
-            requireActivity().finish()
         }
     }
 

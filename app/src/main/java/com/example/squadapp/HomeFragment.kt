@@ -12,6 +12,8 @@ import com.example.squadapp.models.Model
 
 class HomeFragment : Fragment() {
 
+    private var recyclerView: RecyclerView? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -24,13 +26,24 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // Set up RecyclerView
-        val recyclerView = view.findViewById<RecyclerView>(R.id.posts_recycler_view)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        recyclerView = view.findViewById(R.id.posts_recycler_view)
+        recyclerView?.layoutManager = LinearLayoutManager(requireContext())
 
+        // Load posts
+        loadPosts()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh posts when returning to home (e.g., after profile edit)
+        loadPosts()
+    }
+
+    private fun loadPosts() {
         // Fetch all posts from Firebase
         Model.shared.getAllPosts { posts ->
             val adapter = PostAdapter(posts)
-            recyclerView.adapter = adapter
+            recyclerView?.adapter = adapter
         }
     }
 }

@@ -36,4 +36,8 @@ class Model private constructor() {
     fun signInUser(username: String, password: String, completion: AuthCompletion) {
         firebaseModel.signInUser(username, password, completion)
     }
+
+    fun updateUser(userId: String, username: String, discordTag: String, completion: AuthCompletion) {
+        firebaseModel.updateUser(userId, username, discordTag, completion)
+    }
 }
