@@ -36,4 +36,9 @@
     <string name="logout">Logout</string>
     <string name="type_game_name">type game name…</string>
     <string name="publishing">Publishing…</string>
+    <string name="no_posts_yet">No posts yet</string>
+    <string name="signing_up">Signing up...</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="signing_in">Signing in...</string>
+    <string name="sign_in">Sign In</string>
 </resources>

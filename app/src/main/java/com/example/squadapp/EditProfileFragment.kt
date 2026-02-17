@@ -8,8 +8,10 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import com.example.squadapp.models.Model
 import com.google.android.material.button.MaterialButton
 
 class EditProfileFragment : Fragment() {
@@ -21,11 +23,14 @@ class EditProfileFragment : Fragment() {
     private lateinit var cancelBtn: MaterialButton
     private lateinit var saveBtn: MaterialButton
 
+    private var selectedImageUri: Uri? = null
+
     // Activity result launcher for gallery
     private val galleryLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
+            selectedImageUri = uri
             profilePhoto.setImageURI(uri)
         }
     }
@@ -77,8 +82,62 @@ class EditProfileFragment : Fragment() {
         }
 
         saveBtn.setOnClickListener {
-            // TODO: Save changes (user name, discord tag, and profile photo)
+            handleSaveProfile()
+        }
+    }
+
+    private fun handleSaveProfile() {
+        val newUsername = userNameInput.text.toString().trim()
+        val newDiscordTag = discordTagInput.text.toString().trim()
+
+        val mainActivity = activity as? MainActivity
+        if (mainActivity == null) {
+            Toast.makeText(context, "Error: Could not get user information", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val currentUser = mainActivity.currentUser
+
+        // Validation
+        if (newUsername.isEmpty()) {
+            Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (newDiscordTag.isEmpty()) {
+            Toast.makeText(context, "Discord tag cannot be empty", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Check if anything changed
+        if (newUsername == currentUser.username &&
+            newDiscordTag == currentUser.discordTag &&
+            selectedImageUri == null) {
+            Toast.makeText(context, "No changes to save", Toast.LENGTH_SHORT).show()
             parentFragmentManager.popBackStack()
+            return
+        }
+
+        // Disable save button while saving
+        saveBtn.isEnabled = false
+        saveBtn.text = "Saving..."
+
+        // Update user in Firebase
+        Model.shared.updateUser(currentUser.id, newUsername, newDiscordTag) { success, updatedUser, message ->
+            saveBtn.isEnabled = true
+            saveBtn.text = "Save Changes"
+
+            if (success && updatedUser != null) {
+                // Update MainActivity's current user
+                mainActivity.currentUser = updatedUser
+
+                Toast.makeText(context, message ?: "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+
+                // Go back to profile
+                parentFragmentManager.popBackStack()
+            } else {
+                Toast.makeText(context, message ?: "Failed to update profile", Toast.LENGTH_LONG).show()
+            }
         }
     }
 }

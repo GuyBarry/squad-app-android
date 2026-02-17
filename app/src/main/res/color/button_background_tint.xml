@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Disabled state - semi-transparent primary -->
+    <item android:state_enabled="false" android:color="#4D00f7ff" />
+
+    <!-- Enabled state - full primary color -->
+    <item android:color="@color/primary" />
+</selector>
+

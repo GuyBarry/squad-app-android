@@ -5,7 +5,7 @@ import java.util.Date
 data class Post(
     val id: String,
     val image: Int,  // drawable resource ID
-    val user: User,
+    val user: User,  // Uses User (without password) instead of UserDTO
     val description: String,
     val creationTime: Date,
     val gameId: Int
@@ -42,7 +42,7 @@ data class Post(
             return hashMapOf(
                 POST_ID to post.id,
                 POST_IMAGE to post.image,
-                POST_USER to post.user.id,
+                POST_USER to post.user.id, // Store user ID as foreign key reference
                 POST_DESCRIPTION to post.description,
                 POST_CREATION_TIME to post.creationTime,
                 POST_GAME_ID to post.gameId

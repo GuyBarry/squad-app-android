@@ -51,3 +51,4 @@ android-room = { id = "androidx.room", version.ref = "room" }
 gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 google-services = { id = "com.google.gms.google-services" }
 kotlin-kapt = { id = "kotlin-kapt" }
+kotlin-parcelize = { id = "kotlin-parcelize" }
