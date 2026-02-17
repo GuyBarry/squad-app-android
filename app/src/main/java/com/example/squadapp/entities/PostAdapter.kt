@@ -11,8 +11,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.example.squadapp.R
+import com.example.squadapp.models.Model
 import com.example.squadapp.utils.TimeUtils
 import com.google.android.material.button.MaterialButton
+import java.util.Locale
 
 class PostAdapter(
     private val posts: List<Post>,
@@ -28,6 +30,9 @@ class PostAdapter(
         val postText: TextView = itemView.findViewById(R.id.post_text)
         val copyDiscordBtn: MaterialButton = itemView.findViewById(R.id.copy_discord_btn)
         val deletePostBtn: MaterialButton = itemView.findViewById(R.id.delete_post_btn)
+        val gameName: TextView = itemView.findViewById(R.id.game_name_text)
+        val gameRating: TextView = itemView.findViewById(R.id.game_rating_text)
+        val gamePlatforms: TextView = itemView.findViewById(R.id.game_platforms_text)
 
         fun bind(post: Post, onDeletePost: ((Post) -> Unit)?) {
             // Safely load post image with fallback
@@ -35,10 +40,10 @@ class PostAdapter(
                 if (post.image > 0) {
                     postImage.setImageResource(post.image)
                 } else {
-                    postImage.setImageResource(R.drawable.post_image_placeholder_1)
+                    postImage.setImageResource(R.drawable.post_image_placeholder_2)
                 }
             } catch (_: Exception) {
-                postImage.setImageResource(R.drawable.post_image_placeholder_1)
+                postImage.setImageResource(R.drawable.post_image_placeholder_2)
             }
 
             // Safely load user profile image with fallback
@@ -56,6 +61,34 @@ class PostAdapter(
             discordTag.text = post.user.discordTag
             postTime.text = TimeUtils.getTimeAgoString(post.creationTime)
             postText.text = post.description
+
+            // Fetch game data from RAWG API
+            Model.shared.searchGameById(post.gameId) { rawgGame ->
+                if (rawgGame != null) {
+                    // Set game name
+                    gameName.text = rawgGame.name
+
+                    // Set game rating
+                    if (rawgGame.rating != null && rawgGame.rating > 0) {
+                        gameRating.text = "★ ${String.format(Locale.US, "%.1f", rawgGame.rating)}"
+                    } else {
+                        gameRating.text = ""
+                    }
+
+                    // Set platforms
+                    val platforms = rawgGame.platforms?.mapNotNull { it.platform?.name } ?: emptyList()
+                    if (platforms.isNotEmpty()) {
+                        gamePlatforms.text = platforms.joinToString(", ")
+                    } else {
+                        gamePlatforms.text = "No platform information"
+                    }
+                } else {
+                    // Fallback if game data couldn't be fetched
+                    gameName.text = "Unknown Game"
+                    gameRating.text = ""
+                    gamePlatforms.text = "No platform information"
+                }
+            }
 
             // Copy Discord tag on button click
             copyDiscordBtn.setOnClickListener {

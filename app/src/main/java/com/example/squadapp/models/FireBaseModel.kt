@@ -55,7 +55,8 @@ class FirebaseModel {
                     "image" to ((postDocument.get(POST_IMAGE) as? Long)?.toInt() ?: 0),
                     "description" to (postDocument.get(POST_DESCRIPTION) as? String ?: ""),
                     "creationTime" to creationTime,
-                    "user" to (postDocument.get(POST_USER) as? String)
+                    "user" to (postDocument.get(POST_USER) as? String),
+                    "gameId" to ((postDocument.get(Post.POST_GAME_ID) as? Long)?.toInt() ?: 0)
                 )
                 postsData.add(postData)
 
@@ -133,7 +134,8 @@ class FirebaseModel {
                         "image" to ((postDocument.get(POST_IMAGE) as? Long)?.toInt() ?: 0),
                         "description" to (postDocument.get(POST_DESCRIPTION) as? String ?: ""),
                         "creationTime" to creationTime,
-                        "user" to (postDocument.get(POST_USER) as? String)
+                        "user" to (postDocument.get(POST_USER) as? String),
+                        "gameId" to ((postDocument.get(Post.POST_GAME_ID) as? Long)?.toInt() ?: 0)
                     )
                     postsData.add(postData)
                 }
@@ -240,6 +242,7 @@ class FirebaseModel {
             val description = postData["description"] as? String ?: ""
             val creationTime = postData["creationTime"] as? Date ?: Date(System.currentTimeMillis())
             val userId = postData["user"] as? String
+            val gameId = postData["gameId"] as? Int ?: 0
 
             val user = if (userId != null && usersMap.containsKey(userId)) {
                 usersMap[userId]!!
@@ -257,7 +260,8 @@ class FirebaseModel {
                 image = image,
                 user = user,
                 description = description,
-                creationTime = creationTime
+                creationTime = creationTime,
+                gameId = gameId
             )
         }
     }
