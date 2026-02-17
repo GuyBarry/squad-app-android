@@ -16,6 +16,8 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.example.squadapp.entities.User
+import com.example.squadapp.models.Model
 
 class SignInFragment : Fragment() {
     private lateinit var usernameEditText: EditText
@@ -91,13 +93,27 @@ class SignInFragment : Fragment() {
             return
         }
 
-        // TODO: Implement actual sign-in logic (e.g., validate credentials with database/API)
-        Toast.makeText(context, "Sign in successful for $username", Toast.LENGTH_SHORT).show()
+        // Disable button to prevent multiple clicks
+        signInButton.isEnabled = false
+        signInButton.text = getString(R.string.signing_in)
 
-        // Navigate to MainActivity after successful sign-in
-        val intent = Intent(context, MainActivity::class.java)
-        startActivity(intent)
-        requireActivity().finish()
+        // Authenticate user with Firebase
+        Model.shared.signInUser(username, password) { success, user, message ->
+            signInButton.isEnabled = true
+            signInButton.text = getString(R.string.sign_in)
+
+            if (success && user != null) {
+                Toast.makeText(context, "Sign in successful!", Toast.LENGTH_SHORT).show()
+
+                // Navigate to MainActivity with user object (single parcelable)
+                val intent = Intent(context, MainActivity::class.java)
+                intent.putExtra(User.EXTRA_USER, user)
+                startActivity(intent)
+                requireActivity().finish()
+            } else {
+                Toast.makeText(context, message ?: "Sign in failed", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun navigateToSignUp() {
