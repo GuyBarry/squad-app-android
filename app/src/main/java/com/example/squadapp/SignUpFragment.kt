@@ -17,6 +17,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.squadapp.entities.User
+import com.example.squadapp.entities.NewUser
 import com.example.squadapp.models.Model
 
 class SignUpFragment : Fragment() {
@@ -118,8 +119,16 @@ class SignUpFragment : Fragment() {
         signUpButton.isEnabled = false
         signUpButton.text = getString(R.string.signing_up)
 
+        // Create NewUser object for database insertion (password will be hashed in FirebaseModel)
+        val newUser = NewUser(
+            profileImage = 0,
+            username = username,
+            password = password, // Plain password - will be hashed in FirebaseModel
+            discordTag = discordTag
+        )
+
         // Create user in Firebase
-        Model.shared.signUpUser(username, password, discordTag) { success, user, message ->
+        Model.shared.signUpUser(newUser) { success, user, message ->
             signUpButton.isEnabled = true
             signUpButton.text = getString(R.string.sign_up)
 

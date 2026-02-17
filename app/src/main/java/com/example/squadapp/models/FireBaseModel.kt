@@ -9,12 +9,11 @@ import com.example.squadapp.entities.Post.Companion.POST_CREATION_TIME
 import com.example.squadapp.entities.Post.Companion.POST_DESCRIPTION
 import com.example.squadapp.entities.Post.Companion.POST_IMAGE
 import com.example.squadapp.entities.Post.Companion.POST_USER
-import com.example.squadapp.entities.Post.Companion.serialize
+import com.example.squadapp.entities.NewPost
+import com.example.squadapp.entities.NewUser
 import com.example.squadapp.entities.User
 import com.example.squadapp.entities.UserDTO
 import com.example.squadapp.entities.UserDTO.Companion.deserializeUser
-import com.example.squadapp.entities.UserDTO.Companion.serializeUser
-import com.example.squadapp.R
 import com.example.squadapp.utils.PasswordHasher
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -169,7 +168,10 @@ class FirebaseModel {
                     }
             }
             .addOnFailureListener { exception ->
-                Log.e("FirebaseModel", "Error fetching posts for user $userId: ${exception.message}")
+                Log.e(
+                    "FirebaseModel",
+                    "Error fetching posts for user $userId: ${exception.message}"
+                )
                 completion(emptyList())
             }
     }
@@ -255,8 +257,8 @@ class FirebaseModel {
         }
     }
 
-    fun addPost(post: Post, completion: ResultCompletion) {
-        val postData = serialize(post)
+    fun addPost(newPost: NewPost, completion: ResultCompletion) {
+        val postData = NewPost.serialize(newPost)
 
         db.collection(POSTS).add(postData)
             .addOnSuccessListener {
@@ -281,42 +283,41 @@ class FirebaseModel {
             }
     }
 
-    fun signUpUser(username: String, password: String, discordTag: String, completion: AuthCompletion) {
+    fun signUpUser(newUser: NewUser, completion: AuthCompletion) {
         // Check if username already exists
         db.collection(USERS)
-            .whereEqualTo(UserDTO.USER_USERNAME, username)
+            .whereEqualTo(UserDTO.USER_USERNAME, newUser.username)
             .get()
             .addOnSuccessListener { querySnapshot ->
                 if (!querySnapshot.isEmpty) {
-                    Log.d("FirebaseModel", "Username already exists: $username")
+                    Log.d("FirebaseModel", "Username already exists: ${newUser.username}")
                     completion(false, null, "Username already taken")
                 } else {
-                    // Hash the password before storing
-                    val hashedPassword = PasswordHasher.hashPassword(password)
+                    // Hash the password using NewUser utility function
+                    val hashedNewUser = NewUser.withHashedPassword(newUser)
 
-                    // Create new UserDTO for database
-                    val newUserDTO = UserDTO(
-                        id = "", // Will be set by Firestore
-                        profileImage = R.drawable.user_profile_placeholder,
-                        username = username,
-                        password = hashedPassword, // Store hashed password
-                        discordTag = discordTag
-                    )
-
-                    val userData = serializeUser(newUserDTO)
+                    val userData = NewUser.serialize(hashedNewUser)
 
                     db.collection(USERS).add(userData)
                         .addOnSuccessListener { documentReference ->
                             val userId = documentReference.id
-                            val createdUserDTO = newUserDTO.copy(id = userId)
-                            // Convert UserDTO to User (without password) for return
-                            val user = User.fromUserDTO(createdUserDTO)
+                            // Create User object for return (without password)
+                            val user = User(
+                                id = userId,
+                                profileImage = newUser.profileImage,
+                                username = newUser.username,
+                                discordTag = newUser.discordTag
+                            )
                             Log.d("FirebaseModel", "User created successfully with ID: $userId")
                             completion(true, user, "Sign up successful!")
                         }
                         .addOnFailureListener { exception ->
                             Log.e("FirebaseModel", "Error creating user: ${exception.message}")
-                            completion(false, null, "Failed to create account: ${exception.message}")
+                            completion(
+                                false,
+                                null,
+                                "Failed to create account: ${exception.message}"
+                            )
                         }
                 }
             }
@@ -359,7 +360,12 @@ class FirebaseModel {
             }
     }
 
-    fun updateUser(userId: String, username: String, discordTag: String, completion: AuthCompletion) {
+    fun updateUser(
+        userId: String,
+        username: String,
+        discordTag: String,
+        completion: AuthCompletion
+    ) {
         // Check if new username is already taken by another user
         db.collection(USERS)
             .whereEqualTo(UserDTO.USER_USERNAME, username)
@@ -384,8 +390,9 @@ class FirebaseModel {
                             db.collection(USERS).document(userId).get()
                                 .addOnSuccessListener { userDocument ->
                                     if (userDocument.exists()) {
-                                        val userDTO = deserializeUser(userDocument.data ?: emptyMap())
-                                            .copy(id = userId)
+                                        val userDTO =
+                                            deserializeUser(userDocument.data ?: emptyMap())
+                                                .copy(id = userId)
                                         val user = User.fromUserDTO(userDTO)
                                         Log.d("FirebaseModel", "User updated successfully: $userId")
                                         completion(true, user, "Profile updated successfully!")
@@ -394,13 +401,24 @@ class FirebaseModel {
                                     }
                                 }
                                 .addOnFailureListener { exception ->
-                                    Log.e("FirebaseModel", "Error fetching updated user: ${exception.message}")
-                                    completion(false, null, "Failed to fetch updated data: ${exception.message}")
+                                    Log.e(
+                                        "FirebaseModel",
+                                        "Error fetching updated user: ${exception.message}"
+                                    )
+                                    completion(
+                                        false,
+                                        null,
+                                        "Failed to fetch updated data: ${exception.message}"
+                                    )
                                 }
                         }
                         .addOnFailureListener { exception ->
                             Log.e("FirebaseModel", "Error updating user: ${exception.message}")
-                            completion(false, null, "Failed to update profile: ${exception.message}")
+                            completion(
+                                false,
+                                null,
+                                "Failed to update profile: ${exception.message}"
+                            )
                         }
                 }
             }

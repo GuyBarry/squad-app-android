@@ -13,6 +13,7 @@ import com.example.squadapp.models.Model
 class HomeFragment : Fragment() {
 
     private var recyclerView: RecyclerView? = null
+    private var loadingIndicator: View? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -29,6 +30,9 @@ class HomeFragment : Fragment() {
         recyclerView = view.findViewById(R.id.posts_recycler_view)
         recyclerView?.layoutManager = LinearLayoutManager(requireContext())
 
+        // Set up loading indicator
+        loadingIndicator = view.findViewById(R.id.home_loading_indicator)
+
         // Load posts
         loadPosts()
     }
@@ -40,8 +44,16 @@ class HomeFragment : Fragment() {
     }
 
     private fun loadPosts() {
+        // Show loading indicator, hide RecyclerView
+        loadingIndicator?.visibility = View.VISIBLE
+        recyclerView?.visibility = View.GONE
+
         // Fetch all posts from Firebase
         Model.shared.getAllPosts { posts ->
+            // Hide loading indicator, show RecyclerView
+            loadingIndicator?.visibility = View.GONE
+            recyclerView?.visibility = View.VISIBLE
+
             val adapter = PostAdapter(posts)
             recyclerView?.adapter = adapter
         }
