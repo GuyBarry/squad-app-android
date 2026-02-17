@@ -15,6 +15,7 @@ ASL/
 .idea/caches/
 .idea/deploymentTargetDropDown.xml
 .idea/codeStyles
+.idea/misc.xml
 *.iml
 *.ipr
 *.iws

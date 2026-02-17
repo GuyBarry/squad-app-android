@@ -13,6 +13,7 @@ import com.example.squadapp.entities.User
 import com.example.squadapp.entities.User.Companion.deserializeUser
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import com.google.firebase.Timestamp
 import java.sql.Date
 
 class FirebaseModel {
@@ -39,11 +40,16 @@ class FirebaseModel {
             val postsData = mutableListOf<Map<String, Any?>>()
 
             postDocuments.forEach { postDocument ->
+                // Properly convert Timestamp from Firebase to Date
+                val timestamp = postDocument.get(POST_CREATION_TIME) as? Timestamp
+                val creationTime = if (null != timestamp)
+                    Date(timestamp.toDate().time) else Date(System.currentTimeMillis())
+
                 val postData = mapOf(
                     "id" to postDocument.id,
                     "image" to ((postDocument.get(POST_IMAGE) as? Long)?.toInt() ?: 0),
                     "description" to (postDocument.get(POST_DESCRIPTION) as? String ?: ""),
-                    "creationTime" to (postDocument.get(POST_CREATION_TIME) as? Date ?: Date(System.currentTimeMillis())),
+                    "creationTime" to creationTime,
                     "user" to (postDocument.get(POST_USER) as? String)
                 )
                 postsData.add(postData)
@@ -54,7 +60,10 @@ class FirebaseModel {
                 }
             }
 
-            Log.d("FirebaseModel", "Fetched ${postDocuments.size} posts with ${userIds.size} unique users")
+            Log.d(
+                "FirebaseModel",
+                "Fetched ${postDocuments.size} posts with ${userIds.size} unique users"
+            )
 
             // Step 3: Fetch all users in batch
             if (userIds.isNotEmpty()) {
@@ -65,17 +74,23 @@ class FirebaseModel {
                         userId != null && foundUserIds.contains(userId)
                     }
 
-                    Log.d("FirebaseModel", "Filtered posts: ${filteredPostsData.size}/${postsData.size} (removed ${postsData.size - filteredPostsData.size} posts with missing users)")
+                    Log.d(
+                        "FirebaseModel",
+                        "Filtered posts: ${filteredPostsData.size}/${postsData.size} (removed ${postsData.size - filteredPostsData.size} posts with missing users)"
+                    )
 
                     // Step 5: Populate posts with user data
-                    val posts = createPostsWithUsers(filteredPostsData, usersMap).toMutableList()
+                    val posts = combinePostsWithUsers(filteredPostsData, usersMap).toMutableList()
                     posts.sortByDescending { it.creationTime }
-                    Log.d("FirebaseModel", "Successfully created ${posts.size} posts with user data")
+                    Log.d(
+                        "FirebaseModel",
+                        "Successfully created ${posts.size} posts with user data"
+                    )
                     completion(posts)
                 }
             } else {
                 // No users to fetch, create posts with fallback users
-                val posts = createPostsWithUsers(postsData, emptyMap()).toMutableList()
+                val posts = combinePostsWithUsers(postsData, emptyMap()).toMutableList()
                 completion(posts)
             }
 
@@ -85,7 +100,83 @@ class FirebaseModel {
         }
     }
 
-    private fun fetchAllUsers(userIds: List<String>, onComplete: (Map<String, User>, Set<String>) -> Unit) {
+    fun getPostsByUser(userId: String, completion: PostsCompletion) {
+        // Step 1: Query posts where POST_USER equals userId
+        db.collection(POSTS)
+            .whereEqualTo(POST_USER, userId)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val postDocuments = querySnapshot.documents
+
+                if (postDocuments.isEmpty()) {
+                    Log.d("FirebaseModel", "No posts found for user: $userId")
+                    completion(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                // Step 2: Extract post data
+                val postsData = mutableListOf<Map<String, Any?>>()
+
+                postDocuments.forEach { postDocument ->
+                    // Properly convert Timestamp from Firebase to Date
+                    val timestamp = postDocument.get(POST_CREATION_TIME) as? Timestamp
+                    val creationTime = if (null != timestamp)
+                        Date(timestamp.toDate().time) else Date(System.currentTimeMillis())
+
+                    val postData = mapOf(
+                        "id" to postDocument.id,
+                        "image" to ((postDocument.get(POST_IMAGE) as? Long)?.toInt() ?: 0),
+                        "description" to (postDocument.get(POST_DESCRIPTION) as? String ?: ""),
+                        "creationTime" to creationTime,
+                        "user" to (postDocument.get(POST_USER) as? String)
+                    )
+                    postsData.add(postData)
+                }
+
+                Log.d("FirebaseModel", "Fetched ${postDocuments.size} posts for user: $userId")
+
+                // Step 3: Fetch the user data
+                db.collection(USERS).document(userId).get()
+                    .addOnSuccessListener { userDocument ->
+                        val user = if (userDocument.exists()) {
+                            deserializeUser(userDocument.data ?: emptyMap())
+                        } else {
+                            Log.w("FirebaseModel", "User document not found: $userId")
+                            User(
+                                id = "0",
+                                profileImage = 0,
+                                username = "Unknown",
+                                password = "",
+                                discordTag = "Unknown"
+                            )
+                        }
+
+                        // Step 4: Create posts with user data
+                        val usersMap = mapOf(userId to user)
+                        val posts = combinePostsWithUsers(postsData, usersMap).toMutableList()
+                        posts.sortByDescending { it.creationTime }
+
+                        Log.d("FirebaseModel", "Successfully created ${posts.size} posts for user: $userId")
+                        completion(posts)
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("FirebaseModel", "Error fetching user $userId: ${exception.message}")
+                        // Still create posts with fallback user
+                        val posts = combinePostsWithUsers(postsData, emptyMap()).toMutableList()
+                        posts.sortByDescending { it.creationTime }
+                        completion(posts)
+                    }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("FirebaseModel", "Error fetching posts for user $userId: ${exception.message}")
+                completion(emptyList())
+            }
+    }
+
+    private fun fetchAllUsers(
+        userIds: List<String>,
+        onComplete: (Map<String, User>, Set<String>) -> Unit
+    ) {
         val usersMap = mutableMapOf<String, User>()
         val foundUserIds = mutableSetOf<String>()
         var fetchedCount = 0
@@ -108,7 +199,10 @@ class FirebaseModel {
                     }
                     fetchedCount++
                     if (fetchedCount == userIds.size) {
-                        Log.d("FirebaseModel", "All users fetched. Found: ${usersMap.size}/${userIds.size}")
+                        Log.d(
+                            "FirebaseModel",
+                            "All users fetched. Found: ${usersMap.size}/${userIds.size}"
+                        )
                         onComplete(usersMap, foundUserIds)
                     }
                 }
@@ -116,14 +210,17 @@ class FirebaseModel {
                     Log.e("FirebaseModel", "Error fetching user $userId: ${exception.message}")
                     fetchedCount++
                     if (fetchedCount == userIds.size) {
-                        Log.d("FirebaseModel", "All users fetched (with failures). Found: ${usersMap.size}/${userIds.size}")
+                        Log.d(
+                            "FirebaseModel",
+                            "All users fetched (with failures). Found: ${usersMap.size}/${userIds.size}"
+                        )
                         onComplete(usersMap, foundUserIds)
                     }
                 }
         }
     }
 
-    private fun createPostsWithUsers(
+    private fun combinePostsWithUsers(
         postsData: List<Map<String, Any?>>,
         usersMap: Map<String, User>
     ): List<Post> {
@@ -137,7 +234,13 @@ class FirebaseModel {
             val user = if (userId != null && usersMap.containsKey(userId)) {
                 usersMap[userId]!!
             } else {
-                User(id = 0, profileImage = 0, username = "Unknown", password = "", discordTag = "Unknown")
+                User(
+                    id = "0",
+                    profileImage = 0,
+                    username = "Unknown",
+                    password = "",
+                    discordTag = "Unknown"
+                )
             }
 
             Post(
@@ -161,6 +264,18 @@ class FirebaseModel {
             .addOnFailureListener { exception ->
                 Log.e("FirebaseModel", "Error adding post: ${exception.message}")
                 completion(false, "Failed to publish post: ${exception.message}")
+            }
+    }
+
+    fun deletePost(postId: String, completion: ResultCompletion) {
+        db.collection(POSTS).document(postId).delete()
+            .addOnSuccessListener {
+                Log.d("FirebaseModel", "Post deleted successfully with ID: $postId")
+                completion(true, "Post deleted successfully!")
+            }
+            .addOnFailureListener { exception ->
+                Log.e("FirebaseModel", "Error deleting post: ${exception.message}")
+                completion(false, "Failed to delete post: ${exception.message}")
             }
     }
 }

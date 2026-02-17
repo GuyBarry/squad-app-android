@@ -77,7 +77,7 @@
 
         </FrameLayout>
 
-        <!-- Game Dropdown -->
+        <!-- Game Selection -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -87,31 +87,39 @@
             android:layout_marginBottom="8dp" />
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/games_dropdown_layout"
+            android:id="@+id/squad_dropdown_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="8dp"
             app:boxBackgroundColor="#4a4a4a"
             app:boxStrokeColor="#666666"
             app:boxStrokeWidth="1dp"
             app:hintTextColor="@color/primary"
             app:expandedHintEnabled="false"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:endIconMode="dropdown_menu">
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/games_dropdown"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/squad_search_input"
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:inputType="none"
+                android:layout_height="56dp"
+                android:inputType="text"
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 android:gravity="center_vertical"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
-                android:dropDownHeight="850dp" />
+                android:hint="Search or type game name..." />
 
         </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Games List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/games_list_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:maxHeight="300dp"
+            android:nestedScrollingEnabled="false" />
 
         <!-- Description Box -->
         <TextView

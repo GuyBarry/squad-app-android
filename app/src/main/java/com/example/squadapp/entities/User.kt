@@ -1,7 +1,7 @@
 package com.example.squadapp.entities
 
 data class User(
-    val id: Int,
+    val id: String,
     val profileImage: Int,  // drawable resource ID
     val username: String,
     val password: String,
@@ -16,8 +16,9 @@ data class User(
 
         fun deserializeUser(data: Map<String, Any?>): User {
             return User(
-                id = (data[USER_ID] as? Long)?.toInt() ?: (data[USER_ID] as? Int) ?: 0,
-                profileImage = (data[USER_PROFILE_IMAGE] as? Long)?.toInt() ?: (data[USER_PROFILE_IMAGE] as? Int) ?: 0,
+                id = data[USER_ID] as? String ?: "",
+                profileImage = (data[USER_PROFILE_IMAGE] as? Long)?.toInt()
+                    ?: (data[USER_PROFILE_IMAGE] as? Int) ?: 0,
                 username = data[USER_USERNAME] as? String ?: "",
                 password = data[USER_PASSWORD] as? String ?: "",
                 discordTag = data[USER_DISCORD_TAG] as? String ?: ""

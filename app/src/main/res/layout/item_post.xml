@@ -3,36 +3,36 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@color/background"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:background="@color/background">
+    android:padding="16dp">
 
     <!-- Post Image -->
     <ImageView
         android:id="@+id/post_image"
         android:layout_width="match_parent"
         android:layout_height="300dp"
+        android:layout_marginBottom="16dp"
         android:contentDescription="@string/app_name"
-        android:scaleType="centerCrop"
-        android:layout_marginBottom="16dp" />
+        android:scaleType="centerCrop" />
 
     <!-- User Info Container -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_marginBottom="12dp"
         android:gravity="center_vertical"
-        android:layout_marginBottom="12dp">
+        android:orientation="horizontal">
 
         <!-- User Profile Photo -->
         <ImageView
             android:id="@+id/user_profile_image"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:contentDescription="@string/app_name"
-            android:scaleType="centerCrop"
             android:layout_marginEnd="12dp"
-            android:background="@drawable/profile_photo_background" />
+            android:background="@drawable/profile_photo_background"
+            android:contentDescription="@string/app_name"
+            android:scaleType="centerCrop" />
 
         <!-- User Name and Discord Tag -->
         <LinearLayout
@@ -75,23 +75,50 @@
         android:id="@+id/post_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/white"
-        android:textSize="14sp"
-        android:layout_marginBottom="16dp" />
-
-    <!-- Copy Discord Button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/copy_discord_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:text="@string/copy_discord"
-        android:textColor="@color/black"
-        android:textSize="14sp"
         android:layout_marginBottom="16dp"
-        app:icon="@drawable/ic_copy"
-        app:iconTint="@color/black"
-        android:backgroundTint="@color/primary"
-        app:cornerRadius="8dp" />
+        android:textColor="@color/white"
+        android:textSize="14sp" />
+
+    <!-- Action Buttons Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:gravity="start|center_vertical"
+        android:orientation="horizontal">
+
+        <!-- Copy Discord Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/copy_discord_btn"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/primary"
+            android:text="@string/copy_discord"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            app:cornerRadius="8dp"
+            app:icon="@drawable/ic_copy"
+            app:iconTint="@color/black" />
+
+        <!-- Delete Button (hidden by default, shown only in profile) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/delete_post_btn"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="Delete"
+            android:textColor="@color/red"
+            android:textSize="14sp"
+            app:cornerRadius="8dp"
+            app:icon="@drawable/ic_delete"
+            app:iconTint="@color/red"
+            app:strokeColor="@color/red"
+            app:strokeWidth="2dp" />
+
+    </LinearLayout>
 
     <!-- Divider -->
     <View
