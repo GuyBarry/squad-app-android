@@ -81,4 +81,8 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
+
+    // Glide for image loading
+    implementation(libs.glide)
+    kapt(libs.glide.compiler)
 }

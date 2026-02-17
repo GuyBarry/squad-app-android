@@ -137,7 +137,8 @@ class PostFragment : Fragment(R.layout.fragment_post) {
                     name = rawgGame.name,
                     platforms = platforms,
                     imageResId = android.R.drawable.ic_menu_gallery,
-                    id = rawgGame.id
+                    id = rawgGame.id,
+                    imageUrl = rawgGame.backgroundImage
                 )
             }.take(4) // Limit to 4 results
 
