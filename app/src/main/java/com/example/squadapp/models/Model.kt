@@ -1,12 +1,16 @@
 package com.example.squadapp.models
 
 import com.example.squadapp.base.AuthCompletion
+import com.example.squadapp.api.RawgApiClient
 import com.example.squadapp.base.PostsCompletion
+import com.example.squadapp.base.RawgGameCompletion
+import com.example.squadapp.base.RawgGamesCompletion
 import com.example.squadapp.base.ResultCompletion
 import com.example.squadapp.entities.Post
 
 class Model private constructor() {
 
+    private val rawgApiClient = RawgApiClient()
     private val firebaseModel = FirebaseModel()
 
     companion object {
@@ -23,6 +27,14 @@ class Model private constructor() {
 
     fun addPost(post: Post, completion: ResultCompletion) {
         firebaseModel.addPost(post, completion)
+    }
+
+    fun searchGames(gameName: String, completion: RawgGamesCompletion) {
+        rawgApiClient.searchGamesByName(gameName, completion)
+    }
+
+    fun searchGameById(gameId: Int, completion: RawgGameCompletion) {
+        rawgApiClient.searchGameById(gameId, completion)
     }
 
     fun deletePost(postId: String, completion: ResultCompletion) {

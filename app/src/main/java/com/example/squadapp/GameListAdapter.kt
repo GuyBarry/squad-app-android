@@ -4,6 +4,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.squadapp.R
 
 class GameListAdapter(
@@ -17,9 +18,19 @@ class GameListAdapter(
         private val gamePlatform: TextView = itemView.findViewById(R.id.game_platform)
 
         fun bind(game: Game) {
-            gameImage.setImageResource(game.imageResId)
+            // Load image from URL if available, otherwise use resource ID
+            if (game.imageUrl != null) {
+                Glide.with(itemView.context)
+                    .load(game.imageUrl)
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .error(android.R.drawable.ic_menu_gallery)
+                    .into(gameImage)
+            } else {
+                gameImage.setImageResource(game.imageResId)
+            }
+
             gameName.text = game.name
-            gamePlatform.text = game.platform
+            gamePlatform.text = game.platforms.joinToString(", ")
             itemView.setOnClickListener {
                 onGameSelected(game)
             }

@@ -40,20 +40,6 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     private val filteredGames = mutableListOf<Game>()
     private var inputChangeCounter = 0
 
-    // Mock game list with objects
-    private val gameList = listOf(
-        Game("Valorant", "PC", android.R.drawable.ic_menu_view),
-        Game("Counter-Strike 2", "PC", android.R.drawable.ic_menu_view),
-        Game("League of Legends", "PC", android.R.drawable.ic_menu_view),
-        Game("League of Legends2", "PC", android.R.drawable.ic_menu_view),
-        Game("League of Legends3", "PC", android.R.drawable.ic_menu_view),
-        Game("League of nothing", "PC", android.R.drawable.ic_menu_view),
-        Game("Dota 2", "PC", android.R.drawable.ic_menu_view),
-        Game("Fortnite", "PC", android.R.drawable.ic_menu_view),
-        Game("Apex Legends", "PC", android.R.drawable.ic_menu_view),
-        Game("Call of Duty", "PC", android.R.drawable.ic_menu_view),
-        Game("Overwatch 2", "PC", android.R.drawable.ic_menu_view)
-    )
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -112,8 +98,6 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         gameListAdapter = GameListAdapter(filteredGames) { game ->
             selectedGame = game
             gameSearchInput.setText(game.name, TextView.BufferType.EDITABLE)
-            filteredGames.clear()
-            gameListAdapter.notifyDataSetChanged()
         }
         gamesListRecycler.layoutManager = LinearLayoutManager(context)
         gamesListRecycler.adapter = gameListAdapter
@@ -131,8 +115,11 @@ class PostFragment : Fragment(R.layout.fragment_post) {
                     filterGames(s.toString())
                 } else if (s != null && s.isEmpty()) {
                     // Clear the list if input is empty
+                    val size = filteredGames.size
                     filteredGames.clear()
-                    gameListAdapter.notifyDataSetChanged()
+                    if (size > 0) {
+                        gameListAdapter.notifyItemRangeRemoved(0, size)
+                    }
                     selectedGame = null
                 }
             }
@@ -142,13 +129,34 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     }
 
     private fun filterGames(query: String) {
-        val results = gameList.filter { game ->
-            game.name.contains(query, ignoreCase = true)
-        }.take(4)
+        Model.shared.searchGames(query) { rawgGames ->
+            // Parse RawgGame objects to Game objects
+            val games = rawgGames.map { rawgGame ->
+                val platforms = rawgGame.platforms?.mapNotNull { it.platform?.name } ?: emptyList()
+                Game(
+                    name = rawgGame.name,
+                    platforms = platforms,
+                    imageResId = android.R.drawable.ic_menu_gallery,
+                    id = rawgGame.id,
+                    imageUrl = rawgGame.backgroundImage
+                )
+            }.take(4) // Limit to 4 results
 
-        filteredGames.clear()
-        filteredGames.addAll(results)
-        gameListAdapter.notifyDataSetChanged()
+            // Update the adapter on the main thread
+            activity?.runOnUiThread {
+                val oldSize = filteredGames.size
+                filteredGames.clear()
+                if (oldSize > 0) {
+                    gameListAdapter.notifyItemRangeRemoved(0, oldSize)
+                }
+                filteredGames.addAll(games)
+                if (games.isNotEmpty()) {
+                    gameListAdapter.notifyItemRangeInserted(0, games.size)
+                }
+            }
+
+            Log.d("PostFragment", "Found ${games.size} games for query: $query")
+        }
     }
 
     private fun publishPost() {
@@ -180,19 +188,20 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             image = 0, // No local image resource ID when fetching from gallery
             user = currentUser,
             description = description,
-            creationTime = Date(System.currentTimeMillis())
+            creationTime = Date(System.currentTimeMillis()),
+            gameId = selectedGame!!.id // Use the stored game ID
         )
 
         // Disable publish button and show loading state
         isPublishing = true
         publishBtn.isEnabled = false
-        publishBtn.text = "Publishing..."
+        publishBtn.text = getString(R.string.publishing)
 
         // Publish post to server
         Model.shared.addPost(post) { success, message ->
             isPublishing = false
             publishBtn.isEnabled = true
-            publishBtn.text = "Publish Post"
+            publishBtn.text = getString(R.string.publish_post)
 
             if (success) {
                 Log.d("PostFragment", "Post published successfully")
@@ -223,8 +232,11 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         imagePreview.visibility = View.GONE
         imagePlaceholder.visibility = View.VISIBLE
         gameSearchInput.text?.clear()
+        val size = filteredGames.size
         filteredGames.clear()
-        gameListAdapter.notifyDataSetChanged()
+        if (size > 0) {
+            gameListAdapter.notifyItemRangeRemoved(0, size)
+        }
         selectedGame = null
         val descriptionText: TextInputEditText = view?.findViewById(R.id.description_text) ?: return
         descriptionText.text?.clear()
