@@ -34,6 +34,7 @@
     <string name="user_name_label">User Name</string>
     <string name="discord_tag_label">Discord Tag</string>
     <string name="logout">Logout</string>
+    <string name="no_posts_yet">No posts yet</string>
     <string name="signing_up">Signing up...</string>
     <string name="sign_up">Sign Up</string>
     <string name="signing_in">Signing in...</string>

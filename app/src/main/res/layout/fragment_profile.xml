@@ -172,6 +172,18 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
+            <!-- No Posts Message -->
+            <TextView
+                android:id="@+id/no_posts_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/no_posts_yet"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textAlignment="center"
+                android:padding="20dp"
+                android:visibility="gone" />
+
             <!-- User Posts RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/user_posts_recycler_view"
