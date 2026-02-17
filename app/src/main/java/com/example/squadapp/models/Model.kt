@@ -6,7 +6,8 @@ import com.example.squadapp.base.PostsCompletion
 import com.example.squadapp.base.RawgGameCompletion
 import com.example.squadapp.base.RawgGamesCompletion
 import com.example.squadapp.base.ResultCompletion
-import com.example.squadapp.entities.Post
+import com.example.squadapp.entities.NewPost
+import com.example.squadapp.entities.NewUser
 
 class Model private constructor() {
 
@@ -25,8 +26,8 @@ class Model private constructor() {
         firebaseModel.getPostsByUser(userId, completion)
     }
 
-    fun addPost(post: Post, completion: ResultCompletion) {
-        firebaseModel.addPost(post, completion)
+    fun addPost(newPost: NewPost, completion: ResultCompletion) {
+        firebaseModel.addPost(newPost, completion)
     }
 
     fun searchGames(gameName: String, completion: RawgGamesCompletion) {
@@ -41,8 +42,8 @@ class Model private constructor() {
         firebaseModel.deletePost(postId, completion)
     }
 
-    fun signUpUser(username: String, password: String, discordTag: String, completion: AuthCompletion) {
-        firebaseModel.signUpUser(username, password, discordTag, completion)
+    fun signUpUser(newUser: NewUser, completion: AuthCompletion) {
+        firebaseModel.signUpUser(newUser, completion)
     }
 
     fun signInUser(username: String, password: String, completion: AuthCompletion) {
