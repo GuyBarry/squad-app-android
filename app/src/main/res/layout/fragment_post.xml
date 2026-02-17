@@ -159,11 +159,11 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:text="@string/publish_post"
-            android:textColor="@color/background"
+            android:textColor="@color/publish_button_text_color"
             android:textSize="18sp"
             android:textStyle="bold"
             app:cornerRadius="8dp"
-            app:backgroundTint="@color/primary"
+            app:backgroundTint="@color/button_background_tint"
             android:layout_marginBottom="32dp" />
 
     </LinearLayout>
