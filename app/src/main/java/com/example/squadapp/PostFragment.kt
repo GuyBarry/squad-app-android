@@ -224,6 +224,11 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             replace(R.id.fragment_container, HomeFragment())
             commit()
         }
+
+        // Update bottom navigation to highlight Home
+        val mainActivity = activity as? MainActivity
+        val bottomNavigation = mainActivity?.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigation?.selectedItemId = R.id.nav_home
     }
 
     private fun resetForm() {
