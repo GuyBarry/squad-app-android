@@ -38,8 +38,11 @@ class ProfileFragment : Fragment() {
         val logoutBtn = view.findViewById<MaterialButton>(R.id.logout_btn)
         val userPostsRecyclerView = view.findViewById<RecyclerView>(R.id.user_posts_recycler_view)
         val noPostsMessage = view.findViewById<TextView>(R.id.no_posts_message)
+        val loadingIndicator = view.findViewById<View>(R.id.posts_loading_indicator)
+        val contentContainer = view.findViewById<View>(R.id.posts_content_container)
 
-        loadUserProfile(profilePhoto, userName, discordTag, postsCount, userPostsRecyclerView, noPostsMessage)
+        loadUserProfile(profilePhoto, userName, discordTag, postsCount, userPostsRecyclerView,
+            noPostsMessage, loadingIndicator, contentContainer)
 
         // Set up edit profile button click listener
         editProfileBtn.setOnClickListener {
@@ -69,10 +72,14 @@ class ProfileFragment : Fragment() {
         val postsCount = view?.findViewById<TextView>(R.id.posts_count)
         val userPostsRecyclerView = view?.findViewById<RecyclerView>(R.id.user_posts_recycler_view)
         val noPostsMessage = view?.findViewById<TextView>(R.id.no_posts_message)
+        val loadingIndicator = view?.findViewById<View>(R.id.posts_loading_indicator)
+        val contentContainer = view?.findViewById<View>(R.id.posts_content_container)
 
         if (profilePhoto != null && userName != null && discordTag != null &&
-            postsCount != null && userPostsRecyclerView != null && noPostsMessage != null) {
-            loadUserProfile(profilePhoto, userName, discordTag, postsCount, userPostsRecyclerView, noPostsMessage)
+            postsCount != null && userPostsRecyclerView != null && noPostsMessage != null &&
+            loadingIndicator != null && contentContainer != null) {
+            loadUserProfile(profilePhoto, userName, discordTag, postsCount, userPostsRecyclerView,
+                noPostsMessage, loadingIndicator, contentContainer)
         }
     }
 
@@ -82,7 +89,9 @@ class ProfileFragment : Fragment() {
         discordTag: TextView,
         postsCount: TextView,
         userPostsRecyclerView: RecyclerView,
-        noPostsMessage: TextView
+        noPostsMessage: TextView,
+        loadingIndicator: View,
+        contentContainer: View
     ) {
         // Get current user from MainActivity safely
         val mainActivity = activity as? MainActivity
@@ -101,7 +110,8 @@ class ProfileFragment : Fragment() {
             discordTag.text = currentUser.discordTag
 
             // Set up user posts RecyclerView
-            setupUserPosts(userPostsRecyclerView, currentUser, postsCount, noPostsMessage)
+            setupUserPosts(userPostsRecyclerView, currentUser, postsCount, noPostsMessage,
+                loadingIndicator, contentContainer)
         }
     }
 
@@ -109,15 +119,20 @@ class ProfileFragment : Fragment() {
         recyclerView: RecyclerView,
         currentUser: User,
         postsCountTextView: TextView,
-        noPostsMessage: TextView
+        noPostsMessage: TextView,
+        loadingIndicator: View,
+        contentContainer: View
     ) {
         // Show loading state
-        postsCountTextView.text = "..."
-        noPostsMessage.visibility = View.GONE
-        recyclerView.visibility = View.VISIBLE
+        loadingIndicator.visibility = View.VISIBLE
+        contentContainer.visibility = View.GONE
 
         // Fetch all posts from Firebase
         Model.shared.getPostsByUser(currentUser.id, { posts ->
+            // Hide loading, show content
+            loadingIndicator.visibility = View.GONE
+            contentContainer.visibility = View.VISIBLE
+
             // Update posts count with actual number
             postsCountTextView.text = posts.size.toString()
 
@@ -136,7 +151,8 @@ class ProfileFragment : Fragment() {
                 // Set adapter with delete callback
                 val adapter = PostAdapter(posts) { postToDelete ->
                     // Show confirmation and delete post
-                    deletePost(postToDelete, recyclerView, currentUser, postsCountTextView, noPostsMessage)
+                    deletePost(postToDelete, recyclerView, currentUser, postsCountTextView,
+                        noPostsMessage, loadingIndicator, contentContainer)
                 }
                 recyclerView.adapter = adapter
             }
@@ -148,14 +164,17 @@ class ProfileFragment : Fragment() {
         recyclerView: RecyclerView,
         currentUser: User,
         postsCountTextView: TextView,
-        noPostsMessage: TextView
+        noPostsMessage: TextView,
+        loadingIndicator: View,
+        contentContainer: View
     ) {
         // Call Model to delete the post
         Model.shared.deletePost(post.id) { success, message ->
             if (success) {
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
                 // Refresh the posts list
-                setupUserPosts(recyclerView, currentUser, postsCountTextView, noPostsMessage)
+                setupUserPosts(recyclerView, currentUser, postsCountTextView, noPostsMessage,
+                    loadingIndicator, contentContainer)
             } else {
                 Toast.makeText(
                     requireContext(),
