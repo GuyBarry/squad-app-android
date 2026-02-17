@@ -34,4 +34,6 @@
     <string name="user_name_label">User Name</string>
     <string name="discord_tag_label">Discord Tag</string>
     <string name="logout">Logout</string>
+    <string name="type_game_name">type game name…</string>
+    <string name="publishing">Publishing…</string>
 </resources>

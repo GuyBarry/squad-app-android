@@ -19,7 +19,7 @@ class GameListAdapter(
         fun bind(game: Game) {
             gameImage.setImageResource(game.imageResId)
             gameName.text = game.name
-            gamePlatform.text = game.platform
+            gamePlatform.text = game.platforms.joinToString(", ")
             itemView.setOnClickListener {
                 onGameSelected(game)
             }

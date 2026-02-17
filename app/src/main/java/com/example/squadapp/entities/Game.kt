@@ -1,6 +1,6 @@
 data class Game(
     val name: String,
-    val platform: String,
+    val platforms: List<String>,
     val imageResId: Int,
     val id: Int
 )
