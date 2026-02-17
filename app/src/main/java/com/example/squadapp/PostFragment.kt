@@ -98,11 +98,6 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         gameListAdapter = GameListAdapter(filteredGames) { game ->
             selectedGame = game
             gameSearchInput.setText(game.name, TextView.BufferType.EDITABLE)
-            val size = filteredGames.size
-            filteredGames.clear()
-            if (size > 0) {
-                gameListAdapter.notifyItemRangeRemoved(0, size)
-            }
         }
         gamesListRecycler.layoutManager = LinearLayoutManager(context)
         gamesListRecycler.adapter = gameListAdapter
@@ -192,7 +187,8 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             image = 0, // No local image resource ID when fetching from gallery
             user = currentUser,
             description = description,
-            creationTime = Date(System.currentTimeMillis())
+            creationTime = Date(System.currentTimeMillis()),
+            gameId = selectedGame!!.id // Use the stored game ID
         )
 
         // Disable publish button and show loading state

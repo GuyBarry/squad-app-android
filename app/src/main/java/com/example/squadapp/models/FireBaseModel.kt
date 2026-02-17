@@ -230,6 +230,7 @@ class FirebaseModel {
             val description = postData["description"] as? String ?: ""
             val creationTime = postData["creationTime"] as? Date ?: Date(System.currentTimeMillis())
             val userId = postData["user"] as? String
+            val gameId = postData["gameId"] as? Int ?: 0
 
             val user = if (userId != null && usersMap.containsKey(userId)) {
                 usersMap[userId]!!
@@ -248,7 +249,8 @@ class FirebaseModel {
                 image = image,
                 user = user,
                 description = description,
-                creationTime = creationTime
+                creationTime = creationTime,
+                gameId = gameId
             )
         }
     }

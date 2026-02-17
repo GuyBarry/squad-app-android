@@ -2,7 +2,9 @@ package com.example.squadapp.api
 
 import android.util.Log
 import com.example.squadapp.BuildConfig
+import com.example.squadapp.base.RawgGameCompletion
 import com.example.squadapp.base.RawgGamesCompletion
+import com.example.squadapp.entities.RawgGame
 import com.example.squadapp.entities.RawgGamesResponse
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -78,6 +80,44 @@ class RawgApiClient {
 
             override fun onFailure(call: Call<RawgGamesResponse>, t: Throwable) {
                 Log.e(TAG, "Network error: ${t.message}", t)
+            }
+        })
+    }
+
+    /**
+     * Search game by ID
+     * @param gameId ID of the game to retrieve
+     * @param onSuccess Callback with the game object when search is successful (null if not found)
+     */
+    fun searchGameById(
+        gameId: Int,
+        onSuccess: RawgGameCompletion
+    ) {
+        val call = apiService.getGameById(
+            gameId = gameId,
+            apiKey = API_KEY
+        )
+
+        call.enqueue(object : Callback<RawgGame> {
+            override fun onResponse(call: Call<RawgGame>, response: Response<RawgGame>) {
+                if (response.isSuccessful) {
+                    val game = response.body()
+                    if (game != null) {
+                        Log.d(TAG, "Found game: '${game.name}' (ID: $gameId)")
+                        onSuccess(game)
+                    } else {
+                        Log.e(TAG, "Response body is null for game ID: $gameId")
+                        onSuccess(null)
+                    }
+                } else {
+                    Log.e(TAG, "Error fetching game ID $gameId: ${response.code()} ${response.message()}")
+                    onSuccess(null)
+                }
+            }
+
+            override fun onFailure(call: Call<RawgGame>, t: Throwable) {
+                Log.e(TAG, "Network error fetching game ID $gameId: ${t.message}", t)
+                onSuccess(null)
             }
         })
     }

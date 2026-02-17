@@ -2,6 +2,7 @@ package com.example.squadapp.models
 
 import com.example.squadapp.api.RawgApiClient
 import com.example.squadapp.base.PostsCompletion
+import com.example.squadapp.base.RawgGameCompletion
 import com.example.squadapp.base.RawgGamesCompletion
 import com.example.squadapp.base.ResultCompletion
 import com.example.squadapp.entities.Post
@@ -31,6 +32,9 @@ class Model private constructor() {
         rawgApiClient.searchGamesByName(gameName, completion)
     }
 
+    fun searchGameById(gameId: Int, completion: RawgGameCompletion) {
+        rawgApiClient.searchGameById(gameId, completion)
+    }
 
     fun deletePost(postId: String, completion: ResultCompletion) {
         firebaseModel.deletePost(postId, completion)
