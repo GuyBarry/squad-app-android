@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Disabled state - semi-transparent background color -->
+    <item android:state_enabled="false" android:color="#80282828" />
+
+    <!-- Enabled state - full background color -->
+    <item android:color="@color/background" />
+</selector>
+

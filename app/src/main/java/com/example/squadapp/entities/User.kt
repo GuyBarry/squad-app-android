@@ -1,38 +1,36 @@
 package com.example.squadapp.entities
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+/**
+ * User - Main user entity for application layer
+ * Does NOT contain password - safe for passing between activities and UI operations
+ * This is the primary user type used throughout the app
+ * Implements Parcelable to be passed via Intent
+ */
+@Parcelize
 data class User(
     val id: String,
     val profileImage: Int,  // drawable resource ID
     val username: String,
-    val password: String,
     val discordTag: String
-) {
+) : Parcelable {
     companion object {
-        const val USER_ID = "id"
-        const val USER_PROFILE_IMAGE = "profileImage"
-        const val USER_USERNAME = "username"
-        const val USER_PASSWORD = "password"
-        const val USER_DISCORD_TAG = "discordTag"
+        const val EXTRA_USER = "extra_user"
 
-        fun deserializeUser(data: Map<String, Any?>): User {
+        /**
+         * Creates a User from a UserDTO (removes password)
+         */
+        fun fromUserDTO(userDTO: UserDTO): User {
             return User(
-                id = data[USER_ID] as? String ?: "",
-                profileImage = (data[USER_PROFILE_IMAGE] as? Long)?.toInt()
-                    ?: (data[USER_PROFILE_IMAGE] as? Int) ?: 0,
-                username = data[USER_USERNAME] as? String ?: "",
-                password = data[USER_PASSWORD] as? String ?: "",
-                discordTag = data[USER_DISCORD_TAG] as? String ?: ""
-            )
-        }
-
-        fun serializeUser(user: User): Map<String, Any?> {
-            return hashMapOf(
-                USER_ID to user.id,
-                USER_PROFILE_IMAGE to user.profileImage,
-                USER_USERNAME to user.username,
-                USER_PASSWORD to user.password,
-                USER_DISCORD_TAG to user.discordTag
+                id = userDTO.id,
+                profileImage = userDTO.profileImage,
+                username = userDTO.username,
+                discordTag = userDTO.discordTag
             )
         }
     }
 }
+
+

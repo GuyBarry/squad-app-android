@@ -10,14 +10,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
 
-    // Current user data - accessible from fragments
-    val currentUser = User(
-        id = "1",
-        profileImage = R.drawable.user_profile_placeholder,
-        username = "Mayan Ams",
-        password = "1234",
-        discordTag = "mayanamsterdam#1234"
-    )
+    // Current user - accessible from fragments (no password)
+    lateinit var currentUser: User
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,6 +22,9 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        // Get user object from Intent (single parcelable)
+        currentUser = intent.getParcelableExtra(User.EXTRA_USER, User::class.java)!!
 
         // Set up bottom navigation
         val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottom_navigation)
@@ -47,6 +44,12 @@ class MainActivity : AppCompatActivity() {
                 }
                 else -> false
             }
+        }
+
+        // Load HomeFragment by default if no fragment is already present
+        if (savedInstanceState == null) {
+            replaceFragment(HomeFragment())
+            bottomNavigation.selectedItemId = R.id.nav_home
         }
     }
 
