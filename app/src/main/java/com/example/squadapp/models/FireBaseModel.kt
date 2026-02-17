@@ -50,7 +50,8 @@ class FirebaseModel {
                     "image" to ((postDocument.get(POST_IMAGE) as? Long)?.toInt() ?: 0),
                     "description" to (postDocument.get(POST_DESCRIPTION) as? String ?: ""),
                     "creationTime" to creationTime,
-                    "user" to (postDocument.get(POST_USER) as? String)
+                    "user" to (postDocument.get(POST_USER) as? String),
+                    "gameId" to ((postDocument.get(Post.POST_GAME_ID) as? Long)?.toInt() ?: 0)
                 )
                 postsData.add(postData)
 
@@ -128,7 +129,8 @@ class FirebaseModel {
                         "image" to ((postDocument.get(POST_IMAGE) as? Long)?.toInt() ?: 0),
                         "description" to (postDocument.get(POST_DESCRIPTION) as? String ?: ""),
                         "creationTime" to creationTime,
-                        "user" to (postDocument.get(POST_USER) as? String)
+                        "user" to (postDocument.get(POST_USER) as? String),
+                        "gameId" to ((postDocument.get(Post.POST_GAME_ID) as? Long)?.toInt() ?: 0)
                     )
                     postsData.add(postData)
                 }
