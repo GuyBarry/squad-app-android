@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
     implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.storage)
 
     // Room dependencies
     implementation(libs.androidx.room.runtime)

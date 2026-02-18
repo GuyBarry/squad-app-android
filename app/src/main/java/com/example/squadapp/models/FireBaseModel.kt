@@ -51,7 +51,7 @@ class FirebaseModel {
 
                 val postData = mapOf(
                     "id" to postDocument.id,
-                    "image" to ((postDocument.get(POST_IMAGE) as? Long)?.toInt() ?: 0),
+                    "image" to (postDocument.get(POST_IMAGE) as? String ?: ""),
                     "description" to (postDocument.get(POST_DESCRIPTION) as? String ?: ""),
                     "creationTime" to creationTime,
                     "user" to (postDocument.get(POST_USER) as? String),
@@ -130,7 +130,7 @@ class FirebaseModel {
 
                     val postData = mapOf(
                         "id" to postDocument.id,
-                        "image" to ((postDocument.get(POST_IMAGE) as? Long)?.toInt() ?: 0),
+                        "image" to (postDocument.get(POST_IMAGE) as? String ?: ""),
                         "description" to (postDocument.get(POST_DESCRIPTION) as? String ?: ""),
                         "creationTime" to creationTime,
                         "user" to (postDocument.get(POST_USER) as? String),
@@ -231,7 +231,7 @@ class FirebaseModel {
     ): List<Post> {
         return postsData.mapNotNull { postData ->
             val postId = postData["id"] as? String ?: return@mapNotNull null
-            val image = postData["image"] as? Int ?: 0
+            val image = postData["image"] as? String ?: ""
             val description = postData["description"] as? String ?: ""
             val creationTime = postData["creationTime"] as? Date ?: Date(System.currentTimeMillis())
             val userId = postData["user"] as? String

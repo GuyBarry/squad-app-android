@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.squadapp.R
 import com.example.squadapp.models.Model
 import com.example.squadapp.utils.TimeUtils
@@ -35,16 +36,12 @@ class PostAdapter(
         val gamePlatforms: TextView = itemView.findViewById(R.id.game_platforms_text)
 
         fun bind(post: Post, onDeletePost: ((Post) -> Unit)?) {
-            // Safely load post image with fallback
-            try {
-                if (post.image > 0) {
-                    postImage.setImageResource(post.image)
-                } else {
-                    postImage.setImageResource(R.drawable.post_image_placeholder_2)
-                }
-            } catch (_: Exception) {
-                postImage.setImageResource(R.drawable.post_image_placeholder_2)
-            }
+            // Load post image from URL using Glide
+            Glide.with(itemView.context)
+                .load(post.image)
+                .placeholder(R.drawable.post_image_placeholder_2)
+                .error(R.drawable.post_image_placeholder_2)
+                .into(postImage)
 
             // Safely load user profile image with fallback
             try {
