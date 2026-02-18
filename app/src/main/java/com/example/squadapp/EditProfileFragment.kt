@@ -24,6 +24,7 @@ class EditProfileFragment : Fragment() {
     private lateinit var galleryButton: com.google.android.material.floatingactionbutton.FloatingActionButton
     private lateinit var cameraButton: com.google.android.material.floatingactionbutton.FloatingActionButton
     private lateinit var cancelImageButton: com.google.android.material.floatingactionbutton.FloatingActionButton
+    private lateinit var deleteImageButton: com.google.android.material.floatingactionbutton.FloatingActionButton
     private lateinit var userNameInput: EditText
     private lateinit var discordTagInput: EditText
     private lateinit var cancelBtn: MaterialButton
@@ -31,6 +32,7 @@ class EditProfileFragment : Fragment() {
 
     private var selectedImageUri: Uri? = null
     private var originalImageUrl: String = ""  // Store the original profile image URL
+    private var isImageDeleted: Boolean = false  // Track if user wants to delete the image
 
     // Activity result launcher for gallery
     private val galleryLauncher = registerForActivityResult(
@@ -100,6 +102,7 @@ class EditProfileFragment : Fragment() {
         galleryButton = view.findViewById(R.id.gallery_button)
         cameraButton = view.findViewById(R.id.camera_button)
         cancelImageButton = view.findViewById(R.id.cancel_image_button)
+        deleteImageButton = view.findViewById(R.id.delete_image_button)
         userNameInput = view.findViewById(R.id.user_name_input)
         discordTagInput = view.findViewById(R.id.discord_tag_input)
         cancelBtn = view.findViewById(R.id.cancel_btn)
@@ -123,6 +126,11 @@ class EditProfileFragment : Fragment() {
 
             userNameInput.setText(currentUser.username)
             discordTagInput.setText(currentUser.discordTag)
+
+            // Show delete button if user has a profile image (not empty and not placeholder)
+            if (currentUser.profileImage.isNotEmpty()) {
+                deleteImageButton.visibility = View.VISIBLE
+            }
         }
 
         // Set up click listeners
@@ -137,6 +145,10 @@ class EditProfileFragment : Fragment() {
 
         cancelImageButton.setOnClickListener {
             cancelImageChange()
+        }
+
+        deleteImageButton.setOnClickListener {
+            deleteImageChange()
         }
 
         cancelBtn.setOnClickListener {
@@ -194,6 +206,7 @@ class EditProfileFragment : Fragment() {
     private fun cancelImageChange() {
         // Clear the selected image
         selectedImageUri = null
+        isImageDeleted = false
 
         // Restore the original image
         Glide.with(this)
@@ -208,7 +221,29 @@ class EditProfileFragment : Fragment() {
         galleryButton.visibility = View.VISIBLE
         cameraButton.visibility = View.VISIBLE
 
+        // Show delete button if there's an original image
+        if (originalImageUrl.isNotEmpty()) {
+            deleteImageButton.visibility = View.VISIBLE
+        }
+
         Log.d("EditProfileFragment", "Image change cancelled, restored original")
+    }
+
+    private fun deleteImageChange() {
+        // Mark image as deleted
+        isImageDeleted = true
+        selectedImageUri = null
+
+        // Load placeholder image directly (vector drawable works better with setImageResource)
+        profilePhoto.setImageResource(R.drawable.user_profile_placeholder)
+
+        // Hide delete button and show cancel button
+        deleteImageButton.visibility = View.GONE
+        cancelImageButton.visibility = View.VISIBLE
+        galleryButton.visibility = View.GONE
+        cameraButton.visibility = View.GONE
+
+        Log.d("EditProfileFragment", "Image marked for deletion")
     }
 
     private fun handleSaveProfile() {
@@ -237,7 +272,8 @@ class EditProfileFragment : Fragment() {
         // Check if anything changed
         if (newUsername == currentUser.username &&
             newDiscordTag == currentUser.discordTag &&
-            selectedImageUri == null) {
+            selectedImageUri == null &&
+            !isImageDeleted) {
             Toast.makeText(context, "No changes to save", Toast.LENGTH_SHORT).show()
             parentFragmentManager.popBackStack()
             return
@@ -246,6 +282,30 @@ class EditProfileFragment : Fragment() {
         // Disable save button while saving
         saveBtn.isEnabled = false
         saveBtn.text = "Saving..."
+
+        // Handle image deletion
+        if (isImageDeleted && originalImageUrl.isNotEmpty()) {
+            Log.d("EditProfileFragment", "Deleting profile image from Firebase Storage...")
+            saveBtn.text = "Deleting image..."
+
+            Model.shared.deletePicture(originalImageUrl) { success, message ->
+                if (success) {
+                    Log.d("EditProfileFragment", "Image deleted successfully")
+
+                    // Update user profile with empty string for image URL
+                    saveBtn.text = "Updating profile..."
+                    updateUserProfile(currentUser.id, newUsername, newDiscordTag, "", mainActivity)
+                } else {
+                    // Image deletion failed
+                    saveBtn.isEnabled = true
+                    saveBtn.text = "Save Changes"
+
+                    Log.e("EditProfileFragment", "Failed to delete image: $message")
+                    Toast.makeText(context, "Failed to delete image: $message", Toast.LENGTH_LONG).show()
+                }
+            }
+            return
+        }
 
         // If image is selected, upload it first
         if (selectedImageUri != null) {
@@ -258,6 +318,13 @@ class EditProfileFragment : Fragment() {
                 { success, downloadUrl, message ->
                     if (success && downloadUrl != null) {
                         Log.d("EditProfileFragment", "Image uploaded successfully: $downloadUrl")
+
+                        // Delete old image if it exists
+                        if (originalImageUrl.isNotEmpty()) {
+                            Model.shared.deletePicture(originalImageUrl) { deleteSuccess, deleteMessage ->
+                                Log.d("EditProfileFragment", "Old image deletion: $deleteSuccess - $deleteMessage")
+                            }
+                        }
 
                         // Update user with the uploaded image URL
                         saveBtn.text = "Updating profile..."
