@@ -43,16 +43,13 @@ class PostAdapter(
                 .error(R.drawable.post_image_placeholder_2)
                 .into(postImage)
 
-            // Safely load user profile image with fallback
-            try {
-                if (post.user.profileImage > 0) {
-                    userProfileImage.setImageResource(post.user.profileImage)
-                } else {
-                    userProfileImage.setImageResource(R.drawable.user_profile_placeholder)
-                }
-            } catch (_: Exception) {
-                userProfileImage.setImageResource(R.drawable.user_profile_placeholder)
-            }
+            // Load user profile image from URL using Glide
+            Glide.with(itemView.context)
+                .load(post.user.profileImage)
+                .placeholder(R.drawable.user_profile_placeholder)
+                .error(R.drawable.user_profile_placeholder)
+                .circleCrop()
+                .into(userProfileImage)
 
             userName.text = post.user.username
             discordTag.text = post.user.discordTag

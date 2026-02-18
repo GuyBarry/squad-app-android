@@ -8,7 +8,7 @@ import com.example.squadapp.utils.PasswordHasher
  * Contains password field for authentication and database storage
  */
 data class NewUser(
-    val profileImage: Int,  // drawable resource ID
+    val profileImage: String,  // profile image URL from Firebase Storage
     val username: String,
     val password: String,
     val discordTag: String

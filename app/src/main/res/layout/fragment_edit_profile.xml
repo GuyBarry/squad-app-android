@@ -23,36 +23,62 @@
             android:textAlignment="center"
             android:layout_marginBottom="32dp" />
 
-        <!-- Profile Photo Container with Camera Button -->
+        <!-- Profile Photo Container with Round Icon Buttons -->
         <FrameLayout
-            android:layout_width="160dp"
-            android:layout_height="160dp"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="32dp">
 
             <!-- Profile Photo -->
             <ImageView
                 android:id="@+id/edit_profile_photo"
-                android:layout_width="160dp"
-                android:layout_height="160dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:background="@drawable/profile_photo_background"
                 android:contentDescription="@string/profile_photo"
                 android:scaleType="centerCrop" />
 
-            <!-- Camera Button -->
-            <ImageButton
+            <!-- Cancel Button (shown when image is changed) -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/cancel_image_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|end"
+                android:layout_margin="8dp"
+                app:fabSize="mini"
+                app:backgroundTint="#CC000000"
+                app:tint="@color/white"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:contentDescription="@string/cancel"
+                android:visibility="gone" />
+
+            <!-- Gallery Button (Bottom Left) -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/gallery_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|start"
+                android:layout_margin="12dp"
+                app:fabSize="normal"
+                app:backgroundTint="@color/primary"
+                app:tint="@color/white"
+                android:src="@android:drawable/ic_menu_gallery"
+                android:contentDescription="@string/gallery" />
+
+            <!-- Camera Button (Bottom Right) -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/camera_button"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="bottom|end"
-                android:layout_marginEnd="4dp"
-                android:layout_marginBottom="4dp"
-                android:background="@drawable/camera_button_background"
-                android:contentDescription="@string/change_photo"
-                android:elevation="4dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_camera" />
+                android:layout_margin="12dp"
+                app:fabSize="normal"
+                app:backgroundTint="@color/primary"
+                app:tint="@color/white"
+                android:src="@android:drawable/ic_menu_camera"
+                android:contentDescription="@string/camera" />
 
         </FrameLayout>
 

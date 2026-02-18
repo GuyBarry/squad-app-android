@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
 import com.example.squadapp.entities.User
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -98,14 +99,14 @@ class ProfileFragment : Fragment() {
         if (mainActivity != null) {
             val currentUser = mainActivity.currentUser
 
-            // Populate with user data
-            // Use default placeholder if profile image is not set (0 or invalid)
-            val profileImageRes = if (currentUser.profileImage != 0) {
-                currentUser.profileImage
-            } else {
-                R.drawable.user_profile_placeholder
-            }
-            profilePhoto.setImageResource(profileImageRes)
+            // Load user profile image using Glide
+            Glide.with(this)
+                .load(currentUser.profileImage)
+                .placeholder(R.drawable.user_profile_placeholder)
+                .error(R.drawable.user_profile_placeholder)
+                .circleCrop()
+                .into(profilePhoto)
+
             userName.text = currentUser.username
             discordTag.text = currentUser.discordTag
 

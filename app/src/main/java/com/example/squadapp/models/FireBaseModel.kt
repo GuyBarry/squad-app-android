@@ -364,6 +364,7 @@ class FirebaseModel {
         userId: String,
         username: String,
         discordTag: String,
+        profileImageUrl: String? = null,
         completion: AuthCompletion
     ) {
         // Check if new username is already taken by another user
@@ -382,6 +383,11 @@ class FirebaseModel {
                         UserDTO.USER_USERNAME to username,
                         UserDTO.USER_DISCORD_TAG to discordTag
                     )
+
+                    // Add profile image URL to updates if provided
+                    if (profileImageUrl != null) {
+                        updates[UserDTO.USER_PROFILE_IMAGE] = profileImageUrl
+                    }
 
                     db.collection(USERS).document(userId)
                         .update(updates)

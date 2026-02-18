@@ -53,20 +53,10 @@ class Model private constructor() {
         firebaseModel.signInUser(username, password, completion)
     }
 
-    fun updateUser(userId: String, username: String, discordTag: String, completion: AuthCompletion) {
-        firebaseModel.updateUser(userId, username, discordTag, completion)
+    fun updateUser(userId: String, username: String, discordTag: String, profileImageUrl: String? = null, completion: AuthCompletion) {
+        firebaseModel.updateUser(userId, username, discordTag, profileImageUrl, completion)
     }
 
-    // Storage functions
-    fun uploadPicture(
-        imageUri: Uri,
-        folderPath: String,
-        fileName: String,
-        completion: UploadPictureCompletion,
-        onProgress: ((Int) -> Unit)? = null
-    ) {
-        firebaseStorageModel.uploadPicture(imageUri, folderPath, fileName, completion, onProgress)
-    }
 
     fun uploadProfilePicture(
         imageUri: Uri,

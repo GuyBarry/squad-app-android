@@ -121,7 +121,7 @@ class SignUpFragment : Fragment() {
 
         // Create NewUser object for database insertion (password will be hashed in FirebaseModel)
         val newUser = NewUser(
-            profileImage = 0,
+            profileImage = "", // Empty URL - user can add profile picture later
             username = username,
             password = password, // Plain password - will be hashed in FirebaseModel
             discordTag = discordTag
