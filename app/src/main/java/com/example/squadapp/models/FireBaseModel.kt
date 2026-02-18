@@ -144,39 +144,27 @@ class FirebaseModel {
                 // Step 3: Fetch the user data
                 db.collection(USERS).document(userId).get()
                     .addOnSuccessListener { userDocument ->
-                        val userDTO = if (userDocument.exists()) {
-                            deserializeUser(userDocument.data ?: emptyMap())
+                        if (userDocument.exists()) {
+                            val userDTO = deserializeUser(userDocument.data ?: emptyMap())
+                            // Convert UserDTO to User (remove password)
+                            val user = User.fromUserDTO(userDTO)
+
+                            // Step 4: Create posts with user data
+                            val usersMap = mapOf(userId to user)
+                            val posts = combinePostsWithUsers(postsData, usersMap).toMutableList()
+                            posts.sortByDescending { it.creationTime }
+
+                            Log.d("FirebaseModel", "Successfully created ${posts.size} posts for user: $userId")
+                            completion(posts)
                         } else {
-                            Log.w("FirebaseModel", "User document not found: $userId")
-                            UserDTO(
-                                id = "0",
-                                profileImage = 0,
-                                username = "Unknown",
-                                password = "",
-                                discordTag = "Unknown"
-                            )
+                            Log.w("FirebaseModel", "User document not found: $userId - returning empty list")
+                            completion(emptyList())
                         }
-
-                        // Convert UserDTO to User (remove password)
-                        val user = User.fromUserDTO(userDTO)
-
-                        // Step 4: Create posts with user data
-                        val usersMap = mapOf(userId to user)
-                        val posts = combinePostsWithUsers(postsData, usersMap).toMutableList()
-                        posts.sortByDescending { it.creationTime }
-
-                        Log.d(
-                            "FirebaseModel",
-                            "Successfully created ${posts.size} posts for user: $userId"
-                        )
-                        completion(posts)
                     }
                     .addOnFailureListener { exception ->
                         Log.e("FirebaseModel", "Error fetching user $userId: ${exception.message}")
-                        // Still create posts with fallback user
-                        val posts = combinePostsWithUsers(postsData, emptyMap()).toMutableList()
-                        posts.sortByDescending { it.creationTime }
-                        completion(posts)
+                        // Return empty list instead of creating posts with fallback user
+                        completion(emptyList())
                     }
             }
             .addOnFailureListener { exception ->
@@ -249,15 +237,13 @@ class FirebaseModel {
             val userId = postData["user"] as? String
             val gameId = postData["gameId"] as? Int ?: 0
 
+            // Only create post if user exists in usersMap
             val user = if (userId != null && usersMap.containsKey(userId)) {
                 usersMap[userId]!!
             } else {
-                User(
-                    id = "0",
-                    profileImage = 0,
-                    username = "Unknown",
-                    discordTag = "Unknown"
-                )
+                // Return null to filter out this post
+                Log.d("FirebaseModel", "Filtering out post $postId - user not found: $userId")
+                return@mapNotNull null
             }
 
             Post(
