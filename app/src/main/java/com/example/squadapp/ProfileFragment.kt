@@ -169,8 +169,7 @@ class ProfileFragment : Fragment() {
         loadingIndicator: View,
         contentContainer: View
     ) {
-        // Call Model to delete the post
-        Model.shared.deletePost(post.id) { success, message ->
+        Model.shared.deletePost(post.id, post.image) { success, message ->
             if (success) {
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
                 // Refresh the posts list
