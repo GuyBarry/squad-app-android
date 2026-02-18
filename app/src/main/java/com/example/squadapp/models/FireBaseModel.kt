@@ -51,7 +51,7 @@ class FirebaseModel {
 
                 val postData = mapOf(
                     "id" to postDocument.id,
-                    "image" to ((postDocument.get(POST_IMAGE) as? Long)?.toInt() ?: 0),
+                    "image" to (postDocument.get(POST_IMAGE) as? String ?: ""),
                     "description" to (postDocument.get(POST_DESCRIPTION) as? String ?: ""),
                     "creationTime" to creationTime,
                     "user" to (postDocument.get(POST_USER) as? String),
@@ -130,7 +130,7 @@ class FirebaseModel {
 
                     val postData = mapOf(
                         "id" to postDocument.id,
-                        "image" to ((postDocument.get(POST_IMAGE) as? Long)?.toInt() ?: 0),
+                        "image" to (postDocument.get(POST_IMAGE) as? String ?: ""),
                         "description" to (postDocument.get(POST_DESCRIPTION) as? String ?: ""),
                         "creationTime" to creationTime,
                         "user" to (postDocument.get(POST_USER) as? String),
@@ -231,7 +231,7 @@ class FirebaseModel {
     ): List<Post> {
         return postsData.mapNotNull { postData ->
             val postId = postData["id"] as? String ?: return@mapNotNull null
-            val image = postData["image"] as? Int ?: 0
+            val image = postData["image"] as? String ?: ""
             val description = postData["description"] as? String ?: ""
             val creationTime = postData["creationTime"] as? Date ?: Date(System.currentTimeMillis())
             val userId = postData["user"] as? String
@@ -364,6 +364,7 @@ class FirebaseModel {
         userId: String,
         username: String,
         discordTag: String,
+        profileImageUrl: String? = null,
         completion: AuthCompletion
     ) {
         // Check if new username is already taken by another user
@@ -382,6 +383,11 @@ class FirebaseModel {
                         UserDTO.USER_USERNAME to username,
                         UserDTO.USER_DISCORD_TAG to discordTag
                     )
+
+                    // Add profile image URL to updates if provided
+                    if (profileImageUrl != null) {
+                        updates[UserDTO.USER_PROFILE_IMAGE] = profileImageUrl
+                    }
 
                     db.collection(USERS).document(userId)
                         .update(updates)

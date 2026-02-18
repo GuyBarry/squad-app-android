@@ -12,7 +12,7 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class User(
     val id: String,
-    val profileImage: Int,  // drawable resource ID
+    val profileImage: String,  // profile image URL from Firebase Storage
     val username: String,
     val discordTag: String
 ) : Parcelable {

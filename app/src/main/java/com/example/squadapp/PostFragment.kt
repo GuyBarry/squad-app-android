@@ -29,6 +29,9 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     private lateinit var imagePreview: ImageView
     private lateinit var imagePlaceholder: android.widget.LinearLayout
     private lateinit var imageBoxContainer: android.widget.FrameLayout
+    private lateinit var cancelImageButton: MaterialButton
+    private lateinit var galleryButton: MaterialButton
+    private lateinit var cameraButton: MaterialButton
     private lateinit var gameSearchInput: TextInputEditText
     private lateinit var gamesListRecycler: RecyclerView
     private lateinit var gameListAdapter: GameListAdapter
@@ -51,7 +54,31 @@ class PostFragment : Fragment(R.layout.fragment_post) {
                 imagePreview.setImageURI(selectedImageUri)
                 imagePreview.visibility = View.VISIBLE
                 imagePlaceholder.visibility = View.GONE
+                cancelImageButton.visibility = View.VISIBLE
             }
+        }
+    }
+
+    private val takePictureLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            if (selectedImageUri != null) {
+                imagePreview.setImageURI(selectedImageUri)
+                imagePreview.visibility = View.VISIBLE
+                imagePlaceholder.visibility = View.GONE
+                cancelImageButton.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            launchCamera()
+        } else {
+            Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -70,6 +97,9 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         imagePreview = view.findViewById(R.id.post_image_preview)
         imagePlaceholder = view.findViewById(R.id.image_placeholder)
         imageBoxContainer = view.findViewById(R.id.image_box_container)
+        cancelImageButton = view.findViewById(R.id.cancel_image_button)
+        galleryButton = view.findViewById(R.id.gallery_button)
+        cameraButton = view.findViewById(R.id.camera_button)
         gameSearchInput = view.findViewById(R.id.squad_search_input)
         gamesListRecycler = view.findViewById(R.id.games_list_recycler)
         publishBtn = view.findViewById(R.id.publish_btn)
@@ -80,10 +110,19 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         // Set up search input filtering with 2-keystroke delay
         setupSearchInput()
 
-        // Set up image box to open gallery directly on click
-        imageBoxContainer.setOnClickListener {
-            val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            pickImageLauncher.launch(galleryIntent)
+        // Set up gallery button
+        galleryButton.setOnClickListener {
+            openGallery()
+        }
+
+        // Set up camera button
+        cameraButton.setOnClickListener {
+            openCamera()
+        }
+
+        // Set up cancel image button
+        cancelImageButton.setOnClickListener {
+            cancelImage()
         }
 
         // Set up publish button
@@ -159,6 +198,67 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         }
     }
 
+    private fun openGallery() {
+        val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        pickImageLauncher.launch(galleryIntent)
+    }
+
+    private fun openCamera() {
+        // Check if camera permission is granted
+        if (androidx.core.content.ContextCompat.checkSelfPermission(
+                requireContext(),
+                android.Manifest.permission.CAMERA
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            launchCamera()
+        } else {
+            // Request permission
+            requestPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+        }
+    }
+
+    private fun launchCamera() {
+        try {
+            // Create a temporary file for the camera to save the image
+            val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(Date())
+            val storageDir = requireContext().getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
+            val photoFile = java.io.File.createTempFile(
+                "JPEG_${timeStamp}_",
+                ".jpg",
+                storageDir
+            )
+
+            selectedImageUri = androidx.core.content.FileProvider.getUriForFile(
+                requireContext(),
+                "${requireContext().packageName}.fileprovider",
+                photoFile
+            )
+
+            // Create camera intent
+            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, selectedImageUri)
+
+            Log.d("PostFragment", "Launching camera with URI: $selectedImageUri")
+            takePictureLauncher.launch(cameraIntent)
+        } catch (ex: Exception) {
+            Log.e("PostFragment", "Error opening camera", ex)
+            Toast.makeText(context, "Error opening camera: ${ex.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun cancelImage() {
+        // Clear the selected image
+        selectedImageUri = null
+        imagePreview.setImageURI(null)
+
+        // Hide preview and cancel button, show placeholder
+        imagePreview.visibility = View.GONE
+        cancelImageButton.visibility = View.GONE
+        imagePlaceholder.visibility = View.VISIBLE
+
+        Log.d("PostFragment", "Image cancelled and removed")
+    }
+
     private fun publishPost() {
         val descriptionText: TextInputEditText = view?.findViewById(R.id.description_text) ?: return
         val description = descriptionText.text.toString()
@@ -173,6 +273,11 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             return
         }
 
+        if (selectedImageUri == null) {
+            Toast.makeText(context, "Please select or take an image", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         // Get current user from MainActivity
         val mainActivity = activity as? MainActivity
         if (mainActivity == null) {
@@ -182,39 +287,70 @@ class PostFragment : Fragment(R.layout.fragment_post) {
 
         val currentUser = mainActivity.currentUser
 
-        // Create NewPost object (without ID - will be generated by Firestore)
-        val newPost = NewPost(
-            image = 0, // No local image resource ID when fetching from gallery
-            userId = currentUser.id,
-            description = description,
-            creationTime = Date(System.currentTimeMillis()),
-            gameId = selectedGame!!.id // Use the stored game ID
-        )
-
         // Disable publish button and show loading state
         isPublishing = true
         publishBtn.isEnabled = false
         publishBtn.text = getString(R.string.publishing)
 
-        // Publish post to server
-        Model.shared.addPost(newPost) { success, message ->
-            isPublishing = false
-            publishBtn.isEnabled = true
-            publishBtn.text = getString(R.string.publish_post)
+        // Generate a temporary post ID for the image filename
+        val tempPostId = "${currentUser.id}_${System.currentTimeMillis()}"
 
-            if (success) {
-                Log.d("PostFragment", "Post published successfully")
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        // Step 1: Upload image to Firebase Storage
+        Log.d("PostFragment", "Uploading image to Firebase Storage...")
+        Model.shared.uploadPostPicture(
+            selectedImageUri!!,
+            tempPostId,
+            { success, downloadUrl, message ->
+                if (success && downloadUrl != null) {
+                    Log.d("PostFragment", "Image uploaded successfully: $downloadUrl")
 
-                // Reset form and navigate back to home
-                resetForm()
-                navigateToHome()
-            } else {
-                Log.e("PostFragment", "Failed to publish post: $message")
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                // Form is NOT reset, user can try again
+                    // Step 2: Create NewPost object with the uploaded image URL
+                    val newPost = NewPost(
+                        image = downloadUrl, // Use the download URL from Firebase Storage
+                        userId = currentUser.id,
+                        description = description,
+                        creationTime = Date(System.currentTimeMillis()),
+                        gameId = selectedGame!!.id
+                    )
+
+                    // Step 3: Publish post to Firestore
+                    Log.d("PostFragment", "Creating post in Firestore...")
+                    Model.shared.addPost(newPost) { postSuccess, postMessage ->
+                        isPublishing = false
+                        publishBtn.isEnabled = true
+                        publishBtn.text = getString(R.string.publish_post)
+
+                        if (postSuccess) {
+                            Log.d("PostFragment", "Post published successfully")
+                            Toast.makeText(context, "Post published successfully!", Toast.LENGTH_SHORT).show()
+
+                            // Reset form and navigate back to home
+                            resetForm()
+                            navigateToHome()
+                        } else {
+                            Log.e("PostFragment", "Failed to publish post: $postMessage")
+                            Toast.makeText(context, "Failed to create post: $postMessage", Toast.LENGTH_LONG).show()
+                            // Form is NOT reset, user can try again
+                        }
+                    }
+                } else {
+                    // Image upload failed
+                    isPublishing = false
+                    publishBtn.isEnabled = true
+                    publishBtn.text = getString(R.string.publish_post)
+
+                    Log.e("PostFragment", "Failed to upload image: $message")
+                    Toast.makeText(context, "Failed to upload image: $message", Toast.LENGTH_LONG).show()
+                }
+            },
+            onProgress = { progress ->
+                Log.d("PostFragment", "Upload progress: $progress%")
+                // Optionally update UI with progress
+                activity?.runOnUiThread {
+                    publishBtn.text = "Uploading... $progress%"
+                }
             }
-        }
+        )
     }
 
     private fun navigateToHome() {
@@ -234,6 +370,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         selectedImageUri = null
         imagePreview.setImageBitmap(null)
         imagePreview.visibility = View.GONE
+        cancelImageButton.visibility = View.GONE
         imagePlaceholder.visibility = View.VISIBLE
         gameSearchInput.text?.clear()
         val size = filteredGames.size
@@ -246,5 +383,3 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         descriptionText.text?.clear()
     }
 }
-
-

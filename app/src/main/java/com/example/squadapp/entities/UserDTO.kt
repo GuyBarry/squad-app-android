@@ -7,7 +7,7 @@ package com.example.squadapp.entities
  */
 data class UserDTO(
     val id: String,
-    val profileImage: Int,  // drawable resource ID
+    val profileImage: String,  // profile image URL from Firebase Storage
     val username: String,
     val password: String,  // Hashed password for database
     val discordTag: String
@@ -22,8 +22,7 @@ data class UserDTO(
         fun deserializeUser(data: Map<String, Any?>): UserDTO {
             return UserDTO(
                 id = data[USER_ID] as? String ?: "",
-                profileImage = (data[USER_PROFILE_IMAGE] as? Long)?.toInt()
-                    ?: (data[USER_PROFILE_IMAGE] as? Int) ?: 0,
+                profileImage = data[USER_PROFILE_IMAGE] as? String ?: "",
                 username = data[USER_USERNAME] as? String ?: "",
                 password = data[USER_PASSWORD] as? String ?: "",
                 discordTag = data[USER_DISCORD_TAG] as? String ?: ""

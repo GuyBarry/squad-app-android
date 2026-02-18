@@ -4,7 +4,7 @@ import java.util.Date
 
 data class Post(
     val id: String,
-    val image: Int,  // drawable resource ID
+    val image: String,  // image URL from Firebase Storage
     val user: User,  // Uses User (without password) instead of UserDTO
     val description: String,
     val creationTime: Date,
@@ -22,7 +22,7 @@ data class Post(
 
         fun deserialize(json: Map<String, Any?>): Post {
             val id = json[POST_ID] as String
-            val image = json[POST_IMAGE] as Int
+            val image = json[POST_IMAGE] as String
             val description = json[POST_DESCRIPTION] as String
             val creationTime = json[POST_CREATION_TIME] as Date
             val user = json[POST_USER] as User
