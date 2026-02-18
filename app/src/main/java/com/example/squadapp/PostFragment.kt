@@ -155,6 +155,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     private fun setupGamesList() {
         gameListAdapter = GameListAdapter(filteredGames) { game ->
             selectedGame = game
+            inputChangeCounter = 0 // Reset counter when selecting a game
             gameSearchInput.setText(game.name, TextView.BufferType.EDITABLE)
         }
         gamesListRecycler.layoutManager = LinearLayoutManager(context)
@@ -167,6 +168,18 @@ class PostFragment : Fragment(R.layout.fragment_post) {
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 inputChangeCounter++
+
+                // Check if input matches selected game name - if so, show only the selected game
+                if (s != null && selectedGame != null && s.toString() == selectedGame?.name) {
+                    val oldSize = filteredGames.size
+                    filteredGames.clear()
+                    if (oldSize > 0) {
+                        gameListAdapter.notifyItemRangeRemoved(0, oldSize)
+                    }
+                    filteredGames.add(selectedGame!!)
+                    gameListAdapter.notifyItemInserted(0)
+                    return
+                }
 
                 // After 2 keystrokes, filter the games
                 if (s != null && s.length >= 2 && inputChangeCounter >= 2) {
