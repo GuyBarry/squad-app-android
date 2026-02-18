@@ -40,7 +40,27 @@
                 android:visibility="gone"
                 android:contentDescription="@string/image_preview" />
 
-            <!-- Image Placeholder -->
+            <!-- Cancel Button (shown when image is selected) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/cancel_image_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|end"
+                android:layout_margin="12dp"
+                android:text="@string/cancel"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:icon="@android:drawable/ic_menu_close_clear_cancel"
+                app:iconTint="@color/white"
+                app:iconGravity="textStart"
+                app:cornerRadius="8dp"
+                app:backgroundTint="#CC000000"
+                android:visibility="gone"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp" />
+
+            <!-- Image Placeholder with Gallery and Camera Buttons -->
             <LinearLayout
                 android:id="@+id/image_placeholder"
                 android:layout_width="match_parent"
@@ -49,29 +69,60 @@
                 android:gravity="center"
                 android:padding="16dp">
 
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_add_circle"
-                    android:contentDescription="@string/add_image"
-                    android:layout_marginBottom="12dp"
-                    app:tint="@color/primary" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/tap_add_image"
-                    android:textColor="@color/primary"
-                    android:textSize="16sp"
-                    android:layout_marginBottom="8dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/camera_or_gallery"
+                    android:text="@string/add_image_title"
                     android:textColor="@color/white"
-                    android:textSize="14sp"
-                    android:alpha="0.7" />
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="24dp" />
+
+                <!-- Buttons Container -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <!-- Gallery Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/gallery_button"
+                        android:layout_width="140dp"
+                        android:layout_height="64dp"
+                        android:text="@string/gallery"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        app:icon="@android:drawable/ic_menu_gallery"
+                        app:iconTint="@color/white"
+                        app:iconGravity="textStart"
+                        app:iconSize="32dp"
+                        app:cornerRadius="8dp"
+                        app:backgroundTint="@color/primary"
+                        android:layout_marginEnd="16dp"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp" />
+
+                    <!-- Camera Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/camera_button"
+                        android:layout_width="140dp"
+                        android:layout_height="64dp"
+                        android:text="@string/camera"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        app:icon="@android:drawable/ic_menu_camera"
+                        app:iconTint="@color/white"
+                        app:iconGravity="textStart"
+                        app:iconSize="32dp"
+                        app:cornerRadius="8dp"
+                        app:backgroundTint="@color/primary"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp" />
+
+                </LinearLayout>
 
             </LinearLayout>
 

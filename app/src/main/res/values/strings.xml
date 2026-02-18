@@ -13,6 +13,7 @@
     <string name="create_post_header">Create Post</string>
     <string name="image_preview">Image Preview</string>
     <string name="add_image">Add Image</string>
+    <string name="add_image_title">Add an Image</string>
     <string name="tap_add_image">Tap to add image</string>
     <string name="camera_or_gallery">from Camera or Gallery</string>
     <string name="camera">Camera</string>
@@ -37,8 +38,8 @@
     <string name="type_game_name">type game name…</string>
     <string name="publishing">Publishing…</string>
     <string name="no_posts_yet">No posts yet</string>
-    <string name="signing_up">Signing up...</string>
+    <string name="signing_up">Signing up…</string>
     <string name="sign_up">Sign Up</string>
-    <string name="signing_in">Signing in...</string>
+    <string name="signing_in">Signing in…</string>
     <string name="sign_in">Sign In</string>
 </resources>
