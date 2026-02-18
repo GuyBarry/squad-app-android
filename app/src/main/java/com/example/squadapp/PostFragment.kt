@@ -64,11 +64,30 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             if (selectedImageUri != null) {
-                imagePreview.setImageURI(selectedImageUri)
-                imagePreview.visibility = View.VISIBLE
-                imagePlaceholder.visibility = View.GONE
-                cancelImageButton.visibility = View.VISIBLE
+                // Verify that the image file actually exists and has content
+                try {
+                    val inputStream = requireContext().contentResolver.openInputStream(selectedImageUri!!)
+                    if (inputStream != null && inputStream.available() > 0) {
+                        inputStream.close()
+                        imagePreview.setImageURI(selectedImageUri)
+                        imagePreview.visibility = View.VISIBLE
+                        imagePlaceholder.visibility = View.GONE
+                        cancelImageButton.visibility = View.VISIBLE
+                        Log.d("PostFragment", "Camera image captured successfully")
+                    } else {
+                        inputStream?.close()
+                        selectedImageUri = null
+                        Log.d("PostFragment", "Camera image file is empty, clearing URI")
+                    }
+                } catch (e: Exception) {
+                    Log.e("PostFragment", "Error reading camera image", e)
+                    selectedImageUri = null
+                }
             }
+        } else {
+            // User cancelled the camera, clear the URI
+            Log.d("PostFragment", "Camera cancelled by user, clearing URI")
+            selectedImageUri = null
         }
     }
 
@@ -263,6 +282,11 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         val descriptionText: TextInputEditText = view?.findViewById(R.id.description_text) ?: return
         val description = descriptionText.text.toString()
 
+        if (selectedImageUri == null) {
+            Toast.makeText(context, "Please select or take an image", Toast.LENGTH_LONG).show()
+            return
+        }
+
         if (selectedGame == null) {
             Toast.makeText(context, "Please select a game from the list", Toast.LENGTH_SHORT).show()
             return
@@ -270,11 +294,6 @@ class PostFragment : Fragment(R.layout.fragment_post) {
 
         if (description.isEmpty()) {
             Toast.makeText(context, "Please add a description", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (selectedImageUri == null) {
-            Toast.makeText(context, "Please select or take an image", Toast.LENGTH_SHORT).show()
             return
         }
 
