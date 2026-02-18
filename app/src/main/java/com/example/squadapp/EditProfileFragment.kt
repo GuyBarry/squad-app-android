@@ -319,13 +319,6 @@ class EditProfileFragment : Fragment() {
                     if (success && downloadUrl != null) {
                         Log.d("EditProfileFragment", "Image uploaded successfully: $downloadUrl")
 
-                        // Delete old image if it exists
-                        if (originalImageUrl.isNotEmpty()) {
-                            Model.shared.deletePicture(originalImageUrl) { deleteSuccess, deleteMessage ->
-                                Log.d("EditProfileFragment", "Old image deletion: $deleteSuccess - $deleteMessage")
-                            }
-                        }
-
                         // Update user with the uploaded image URL
                         saveBtn.text = "Updating profile..."
                         updateUserProfile(currentUser.id, newUsername, newDiscordTag, downloadUrl, mainActivity)
