@@ -168,7 +168,7 @@
             android:id="@+id/games_list_recycler"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="12dp"
             android:maxHeight="300dp"
             android:nestedScrollingEnabled="false" />
 
@@ -195,7 +195,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/description_text"
                 android:layout_width="match_parent"
-                android:layout_height="120dp"
+                android:layout_height="80dp"
                 android:inputType="textMultiLine"
                 android:textColor="@color/white"
                 android:textSize="16sp"
@@ -215,7 +215,7 @@
             android:textStyle="bold"
             app:cornerRadius="8dp"
             app:backgroundTint="@color/button_background_tint"
-            android:layout_marginBottom="32dp" />
+            android:layout_marginBottom="12dp" />
 
     </LinearLayout>
 
