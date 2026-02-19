@@ -20,6 +20,14 @@
             android:contentDescription="@string/app_name"
             android:scaleType="centerCrop" />
 
+        <!-- Loading spinner shown while post image loads -->
+        <ProgressBar
+            android:id="@+id/post_image_loader"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:visibility="visible" />
+
         <!-- Game Info Overlay at bottom of image -->
         <LinearLayout
             android:layout_width="match_parent"

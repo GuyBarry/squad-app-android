@@ -1,6 +1,8 @@
 package com.example.squadapp
 
+import android.content.Context
 import android.os.Bundle
+import android.view.inputmethod.InputMethodManager
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.TextPaint
@@ -54,6 +56,16 @@ class SignUpFragment : Fragment() {
         signUpViewModel.isSigningUp.observe(viewLifecycleOwner) { isLoading ->
             signUpButton.isEnabled = !isLoading
             signUpButton.text = if (isLoading) getString(R.string.signing_up) else getString(R.string.sign_up)
+            usernameEditText.isEnabled = !isLoading
+            emailEditText.isEnabled = !isLoading
+            discordTagEditText.isEnabled = !isLoading
+            passwordEditText.isEnabled = !isLoading
+            confirmPasswordEditText.isEnabled = !isLoading
+            if (isLoading) {
+                view.clearFocus()
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(view.windowToken, 0)
+            }
         }
 
         signUpViewModel.signUpResult.observe(viewLifecycleOwner) { (success, message) ->

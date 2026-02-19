@@ -2,7 +2,9 @@ package com.example.squadapp
 
 import Game
 import com.example.squadapp.entities.GameListAdapter
+import android.content.Context
 import android.content.Intent
+import android.view.inputmethod.InputMethodManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -37,6 +39,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     private lateinit var galleryButton: MaterialButton
     private lateinit var cameraButton: MaterialButton
     private lateinit var gameSearchInput: TextInputEditText
+    private lateinit var descriptionInput: TextInputEditText
     private lateinit var gamesListRecycler: RecyclerView
     private lateinit var gameListAdapter: GameListAdapter
     private lateinit var publishBtn: MaterialButton
@@ -110,6 +113,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         galleryButton = view.findViewById(R.id.gallery_button)
         cameraButton = view.findViewById(R.id.camera_button)
         gameSearchInput = view.findViewById(R.id.squad_search_input)
+        descriptionInput = view.findViewById(R.id.description_text)
         gamesListRecycler = view.findViewById(R.id.games_list_recycler)
         publishBtn = view.findViewById(R.id.publish_btn)
 
@@ -146,6 +150,16 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         // Observe publishing state
         postViewModel.isPublishing.observe(viewLifecycleOwner) { isPublishing ->
             publishBtn.isEnabled = !isPublishing
+            descriptionInput.isEnabled = !isPublishing
+            gameSearchInput.isEnabled = !isPublishing
+            galleryButton.isEnabled = !isPublishing
+            cameraButton.isEnabled = !isPublishing
+            cancelImageButton.isEnabled = !isPublishing
+            if (isPublishing) {
+                view.clearFocus()
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(view.windowToken, 0)
+            }
         }
 
         postViewModel.publishProgress.observe(viewLifecycleOwner) { progress ->
