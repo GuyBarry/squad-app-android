@@ -274,4 +274,16 @@ class FirebaseModel {
                 completion(false, "Failed to delete post: ${exception.message}")
             }
     }
+
+    fun updatePost(postId: String, updates: Map<String, Any?>, completion: ResultCompletion) {
+        db.collection(POSTS).document(postId).update(updates)
+            .addOnSuccessListener {
+                Log.d("FirebaseModel", "Post updated successfully with ID: $postId")
+                completion(true, "Post updated successfully!")
+            }
+            .addOnFailureListener { exception ->
+                Log.e("FirebaseModel", "Error updating post: ${exception.message}")
+                completion(false, "Failed to update post: ${exception.message}")
+            }
+    }
 }

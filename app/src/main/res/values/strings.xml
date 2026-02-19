@@ -43,4 +43,7 @@
     <string name="sign_up">Sign Up</string>
     <string name="signing_in">Signing in…</string>
     <string name="sign_in">Sign In</string>
+    <string name="edit_post_header">Edit Post</string>
+    <string name="update_post">Update Post</string>
+    <string name="edit">Edit</string>
 </resources>

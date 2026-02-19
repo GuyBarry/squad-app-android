@@ -24,7 +24,8 @@ import java.util.Locale
 
 class PostAdapter(
     private val posts: List<Post>,
-    private val onDeletePost: ((Post) -> Unit)? = null
+    private val onDeletePost: ((Post) -> Unit)? = null,
+    private val onEditPost: ((Post) -> Unit)? = null
 ) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
     class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -36,12 +37,13 @@ class PostAdapter(
         val postTime: TextView = itemView.findViewById(R.id.post_time)
         val postText: TextView = itemView.findViewById(R.id.post_text)
         val copyDiscordBtn: MaterialButton = itemView.findViewById(R.id.copy_discord_btn)
+        val editPostBtn: MaterialButton = itemView.findViewById(R.id.edit_post_btn)
         val deletePostBtn: MaterialButton = itemView.findViewById(R.id.delete_post_btn)
         val gameName: TextView = itemView.findViewById(R.id.game_name_text)
         val gameRating: TextView = itemView.findViewById(R.id.game_rating_text)
         val gamePlatforms: TextView = itemView.findViewById(R.id.game_platforms_text)
 
-        fun bind(post: Post, onDeletePost: ((Post) -> Unit)?) {
+        fun bind(post: Post, onDeletePost: ((Post) -> Unit)?, onEditPost: ((Post) -> Unit)?) {
             // Load post image from URL using Glide
             postImageLoader.visibility = View.VISIBLE
             Glide.with(itemView.context)
@@ -123,13 +125,22 @@ class PostAdapter(
                 Toast.makeText(itemView.context, "Discord tag copied!", Toast.LENGTH_SHORT).show()
             }
 
-            // Show/hide delete button and set click listener
+            // Profile mode: show edit + delete, hide copy discord
+            // Home mode: show copy discord, hide edit + delete
             if (onDeletePost != null) {
+                copyDiscordBtn.visibility = View.GONE
+                editPostBtn.visibility = View.VISIBLE
                 deletePostBtn.visibility = View.VISIBLE
+
+                editPostBtn.setOnClickListener {
+                    onEditPost?.invoke(post)
+                }
                 deletePostBtn.setOnClickListener {
                     onDeletePost.invoke(post)
                 }
             } else {
+                copyDiscordBtn.visibility = View.VISIBLE
+                editPostBtn.visibility = View.GONE
                 deletePostBtn.visibility = View.GONE
             }
         }
@@ -141,7 +152,7 @@ class PostAdapter(
     }
 
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
-        holder.bind(posts[position], onDeletePost)
+        holder.bind(posts[position], onDeletePost, onEditPost)
     }
 
     override fun getItemCount(): Int = posts.size

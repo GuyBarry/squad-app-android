@@ -1,7 +1,10 @@
 package com.example.squadapp.entities
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 import java.util.Date
 
+@Parcelize
 data class Post(
     val id: String,
     val image: String,  // image URL from Firebase Storage
@@ -9,7 +12,7 @@ data class Post(
     val description: String,
     val creationTime: Date,
     val gameId: Int
-) {
+) : Parcelable {
 
     companion object {
         // Post JSON keys

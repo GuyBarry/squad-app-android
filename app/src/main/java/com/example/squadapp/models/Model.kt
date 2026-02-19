@@ -55,6 +55,10 @@ class Model private constructor() {
         firebaseModel.deletePost(postId, completion)
     }
 
+    fun updatePost(postId: String, updates: Map<String, Any?>, completion: ResultCompletion) {
+        firebaseModel.updatePost(postId, updates, completion)
+    }
+
     fun signUpUser(password: String, newUser: NewUser, completion: AuthCompletion) {
         firebaseAuthModel.signUpUser(password, newUser, completion)
     }

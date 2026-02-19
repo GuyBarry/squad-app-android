@@ -54,6 +54,9 @@
         <action
             android:id="@+id/action_profileFragment_to_homeFragment2"
             app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_profileFragment_to_editPostFragment"
+            app:destination="@id/editPostFragment" />
     </fragment>
 
     <fragment
@@ -66,6 +69,22 @@
             app:argType="com.example.squadapp.entities.User" />
         <action
             android:id="@+id/action_editProfileFragment_to_profileFragment"
+            app:destination="@id/profileFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/editPostFragment"
+        android:name="com.example.squadapp.EditPostFragment"
+        android:label="Edit Post"
+        tools:layout="@layout/fragment_edit_post" >
+        <argument
+            android:name="post"
+            app:argType="com.example.squadapp.entities.Post" />
+        <argument
+            android:name="user"
+            app:argType="com.example.squadapp.entities.User" />
+        <action
+            android:id="@+id/action_editPostFragment_to_profileFragment"
             app:destination="@id/profileFragment" />
     </fragment>
 
