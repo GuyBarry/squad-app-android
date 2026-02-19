@@ -13,6 +13,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.squadapp.models.Model
 import com.google.android.material.button.MaterialButton
@@ -152,7 +153,7 @@ class EditProfileFragment : Fragment() {
         }
 
         cancelBtn.setOnClickListener {
-            parentFragmentManager.popBackStack()
+            findNavController().popBackStack()
         }
 
         saveBtn.setOnClickListener {
@@ -275,7 +276,7 @@ class EditProfileFragment : Fragment() {
             selectedImageUri == null &&
             !isImageDeleted) {
             Toast.makeText(context, "No changes to save", Toast.LENGTH_SHORT).show()
-            parentFragmentManager.popBackStack()
+            findNavController().popBackStack()
             return
         }
 
@@ -362,7 +363,7 @@ class EditProfileFragment : Fragment() {
                 Toast.makeText(context, message ?: "Profile updated successfully!", Toast.LENGTH_SHORT).show()
 
                 // Go back to profile
-                parentFragmentManager.popBackStack()
+                findNavController().popBackStack()
             } else {
                 Toast.makeText(context, message ?: "Failed to update profile", Toast.LENGTH_LONG).show()
             }

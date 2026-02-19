@@ -16,6 +16,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.example.squadapp.entities.User
 import com.example.squadapp.models.Model
 
@@ -117,11 +118,7 @@ class SignInFragment : Fragment() {
     }
 
     private fun navigateToSignUp() {
-        parentFragmentManager.beginTransaction().apply {
-            replace(R.id.fragment_container, SignUpFragment())
-            addToBackStack(null)
-            commit()
-        }
+        findNavController().navigate(R.id.action_signInFragment_to_signUpFragment)
     }
 }
 

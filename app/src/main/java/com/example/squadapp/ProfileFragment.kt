@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.squadapp.entities.User
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -47,11 +48,7 @@ class ProfileFragment : Fragment() {
 
         // Set up edit profile button click listener
         editProfileBtn.setOnClickListener {
-            parentFragmentManager.beginTransaction().apply {
-                replace(R.id.fragment_container, EditProfileFragment())
-                addToBackStack(null)
-                commit()
-            }
+            findNavController().navigate(R.id.action_profileFragment_to_editProfileFragment)
         }
 
         // Set up logout button click listener

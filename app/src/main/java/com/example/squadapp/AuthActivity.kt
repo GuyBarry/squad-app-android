@@ -16,14 +16,6 @@ class AuthActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
-        // Set Sign In as default fragment if no fragment is already present
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction().apply {
-                replace(R.id.fragment_container, SignInFragment())
-                commit()
-            }
-        }
     }
 }
 

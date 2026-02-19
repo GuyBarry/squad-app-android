@@ -5,6 +5,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment
 import com.example.squadapp.entities.User
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -12,6 +14,8 @@ class MainActivity : AppCompatActivity() {
 
     // Current user - accessible from fragments (no password)
     lateinit var currentUser: User
+
+    private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,37 +30,43 @@ class MainActivity : AppCompatActivity() {
         // Get user object from Intent (single parcelable)
         currentUser = intent.getParcelableExtra(User.EXTRA_USER, User::class.java)!!
 
-        // Set up bottom navigation
+        // Set up NavController from NavHostFragment
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment_main) as NavHostFragment
+        navController = navHostFragment.navController
+
+        // Set up bottom navigation with NavController
         val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigation.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_home -> {
-                    replaceFragment(HomeFragment())
+                    navController.navigate(R.id.homeFragment)
                     true
                 }
                 R.id.nav_post -> {
-                    replaceFragment(PostFragment())
+                    navController.navigate(R.id.postFragment)
                     true
                 }
                 R.id.nav_profile -> {
-                    replaceFragment(ProfileFragment())
+                    navController.navigate(R.id.profileFragment)
                     true
                 }
                 else -> false
             }
         }
 
-        // Load HomeFragment by default if no fragment is already present
-        if (savedInstanceState == null) {
-            replaceFragment(HomeFragment())
-            bottomNavigation.selectedItemId = R.id.nav_home
+        // Update bottom navigation when back navigation occurs
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            when (destination.id) {
+                R.id.homeFragment -> bottomNavigation.menu.findItem(R.id.nav_home)?.isChecked = true
+                R.id.postFragment -> bottomNavigation.menu.findItem(R.id.nav_post)?.isChecked = true
+                R.id.profileFragment, R.id.editProfileFragment ->
+                    bottomNavigation.menu.findItem(R.id.nav_profile)?.isChecked = true
+            }
         }
     }
 
-    private fun replaceFragment(fragment: androidx.fragment.app.Fragment) {
-        supportFragmentManager.beginTransaction().apply {
-            replace(R.id.fragment_container, fragment)
-            commit()
-        }
+    override fun onSupportNavigateUp(): Boolean {
+        return navController.navigateUp() || super.onSupportNavigateUp()
     }
 }
