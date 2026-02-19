@@ -1,6 +1,5 @@
 package com.example.squadapp
 
-import android.content.Intent
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.Spanned
@@ -16,11 +15,13 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
-import com.example.squadapp.entities.User
 import com.example.squadapp.models.Model
 
 class SignInFragment : Fragment() {
+
+    private val authViewModel: AuthViewModel by activityViewModels()
     private lateinit var emailEditText: EditText
     private lateinit var passwordEditText: EditText
     private lateinit var signInButton: Button
@@ -105,12 +106,7 @@ class SignInFragment : Fragment() {
 
             if (success && user != null) {
                 Toast.makeText(context, "Sign in successful!", Toast.LENGTH_SHORT).show()
-
-                // Navigate to MainActivity with user object (single parcelable)
-                val intent = Intent(context, MainActivity::class.java)
-                intent.putExtra(User.EXTRA_USER, user)
-                startActivity(intent)
-                requireActivity().finish()
+                authViewModel.onAuthSuccess(user)
             } else {
                 Toast.makeText(context, message ?: "Sign in failed", Toast.LENGTH_SHORT).show()
             }

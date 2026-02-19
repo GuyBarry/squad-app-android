@@ -5,13 +5,19 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ProgressBar
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.squadapp.entities.User
 import com.example.squadapp.models.Model
+import kotlinx.coroutines.launch
 
 class AuthActivity : AppCompatActivity() {
+
+    val authViewModel: AuthViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -23,7 +29,14 @@ class AuthActivity : AppCompatActivity() {
         }
 
         val loadingIndicator = findViewById<ProgressBar>(R.id.auth_loading_indicator)
-        val fragmentContainer = findViewById<View>(R.id.fragment_container)
+        val fragmentContainer = findViewById<View>(R.id.nav_host_fragment_auth)
+
+        // Observe navigation events from fragments
+        lifecycleScope.launch {
+            authViewModel.navigateToMain.collect { user ->
+                navigateToMain(user)
+            }
+        }
 
         // Show loading, hide fragment container while checking session
         loadingIndicator.visibility = View.VISIBLE
@@ -34,15 +47,10 @@ class AuthActivity : AppCompatActivity() {
                 loadingIndicator.visibility = View.GONE
                 if (success && user != null) {
                     // Already logged in — go straight to MainActivity
-                    navigateToMain(user)
+                    authViewModel.onAuthSuccess(user)
                 } else {
                     // No active session — show sign-in screen
                     fragmentContainer.visibility = View.VISIBLE
-                    if (savedInstanceState == null) {
-                        supportFragmentManager.beginTransaction()
-                            .replace(R.id.fragment_container, SignInFragment())
-                            .commit()
-                    }
                 }
             }
         }
