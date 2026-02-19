@@ -14,9 +14,9 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.squadapp.entities.RawgGame
@@ -27,9 +27,8 @@ import android.widget.TextView
 import java.util.Date
 
 class PostFragment : Fragment(R.layout.fragment_post) {
-
-    private val mainViewModel: MainViewModel by activityViewModels()
     private val postViewModel: PostViewModel by viewModels()
+    private val args: PostFragmentArgs by navArgs()
 
     private lateinit var imagePreview: ImageView
     private lateinit var imagePlaceholder: android.widget.LinearLayout
@@ -268,17 +267,12 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             return
         }
 
-        val userId = mainViewModel.currentUser.value?.id
-        if (userId == null) {
-            Toast.makeText(context, "Error: Could not get user information", Toast.LENGTH_SHORT).show()
-            return
-        }
-
+        val userId = args.user.id
         postViewModel.publishPost(selectedImageUri!!, userId, description)
     }
 
     private fun navigateToHome() {
-        findNavController().navigate(R.id.homeFragment)
+        findNavController().navigate(R.id.homeFragment, HomeFragmentArgs(user = args.user).toBundle())
         val bottomNavigation = activity?.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigation?.selectedItemId = R.id.nav_home
     }
