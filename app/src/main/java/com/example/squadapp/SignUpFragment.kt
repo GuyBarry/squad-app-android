@@ -23,6 +23,7 @@ import com.example.squadapp.models.Model
 
 class SignUpFragment : Fragment() {
     private lateinit var usernameEditText: EditText
+    private lateinit var emailEditText: EditText
     private lateinit var discordTagEditText: EditText
     private lateinit var passwordEditText: EditText
     private lateinit var confirmPasswordEditText: EditText
@@ -41,6 +42,7 @@ class SignUpFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         usernameEditText = view.findViewById(R.id.signup_username)
+        emailEditText = view.findViewById(R.id.signup_email)
         discordTagEditText = view.findViewById(R.id.signup_discord_tag)
         passwordEditText = view.findViewById(R.id.signup_password)
         confirmPasswordEditText = view.findViewById(R.id.signup_confirm_password)
@@ -58,7 +60,7 @@ class SignUpFragment : Fragment() {
     private fun setupSignInLink() {
         val fullText = "Already have an account? Sign in here"
         val spannableString = SpannableString(fullText)
-        
+
         val clickableSpan = object : ClickableSpan() {
             override fun onClick(widget: View) {
                 navigateToSignIn()
@@ -76,7 +78,6 @@ class SignUpFragment : Fragment() {
 
         // Apply clickable span
         spannableString.setSpan(clickableSpan, startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        
         // Apply underline span
         spannableString.setSpan(UnderlineSpan(), startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
 
@@ -86,6 +87,7 @@ class SignUpFragment : Fragment() {
 
     private fun handleSignUp() {
         val username = usernameEditText.text.toString().trim()
+        val email = emailEditText.text.toString().trim()
         val discordTag = discordTagEditText.text.toString().trim()
         val password = passwordEditText.text.toString().trim()
         val confirmPassword = confirmPasswordEditText.text.toString().trim()
@@ -93,6 +95,11 @@ class SignUpFragment : Fragment() {
         // Validation
         if (username.isEmpty()) {
             Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (email.isEmpty()) {
+            Toast.makeText(context, "Email cannot be empty", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -120,16 +127,15 @@ class SignUpFragment : Fragment() {
         signUpButton.isEnabled = false
         signUpButton.text = getString(R.string.signing_up)
 
-        // Create NewUser object for database insertion (password will be hashed in FirebaseModel)
         val newUser = NewUser(
             profileImage = "", // Empty URL - user can add profile picture later
             username = username,
-            password = password, // Plain password - will be hashed in FirebaseModel
+            email = email,
             discordTag = discordTag
         )
 
-        // Create user in Firebase
-        Model.shared.signUpUser(newUser) { success, user, message ->
+        // Create account with Firebase Auth, then save profile to Firestore
+        Model.shared.signUpUser(password, newUser) { success, user, message ->
             signUpButton.isEnabled = true
             signUpButton.text = getString(R.string.sign_up)
 
@@ -151,5 +157,3 @@ class SignUpFragment : Fragment() {
         findNavController().navigate(R.id.action_signUpFragment_to_signInFragment)
     }
 }
-
-

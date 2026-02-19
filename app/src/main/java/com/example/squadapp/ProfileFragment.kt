@@ -53,6 +53,7 @@ class ProfileFragment : Fragment() {
 
         // Set up logout button click listener
         logoutBtn.setOnClickListener {
+            Model.shared.signOut()
             val intent = Intent(requireContext(), AuthActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }

@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
+import com.example.squadapp.entities.User
 import com.example.squadapp.models.Model
 import com.google.android.material.button.MaterialButton
 import java.util.Date
@@ -295,7 +296,7 @@ class EditProfileFragment : Fragment() {
 
                     // Update user profile with empty string for image URL
                     saveBtn.text = "Updating profile..."
-                    updateUserProfile(currentUser.id, newUsername, newDiscordTag, "", mainActivity)
+                    updateUserProfile(currentUser, newUsername, newDiscordTag, "", mainActivity)
                 } else {
                     // Image deletion failed
                     saveBtn.isEnabled = true
@@ -322,7 +323,7 @@ class EditProfileFragment : Fragment() {
 
                         // Update user with the uploaded image URL
                         saveBtn.text = "Updating profile..."
-                        updateUserProfile(currentUser.id, newUsername, newDiscordTag, downloadUrl, mainActivity)
+                        updateUserProfile(currentUser, newUsername, newDiscordTag, downloadUrl, mainActivity)
                     } else {
                         // Image upload failed
                         saveBtn.isEnabled = true
@@ -341,18 +342,18 @@ class EditProfileFragment : Fragment() {
             )
         } else {
             // No image selected, just update user info
-            updateUserProfile(currentUser.id, newUsername, newDiscordTag, null, mainActivity)
+            updateUserProfile(currentUser, newUsername, newDiscordTag, null, mainActivity)
         }
     }
 
     private fun updateUserProfile(
-        userId: String,
+        currentUser: User,
         username: String,
         discordTag: String,
         profileImageUrl: String?,
         mainActivity: MainActivity
     ) {
-        Model.shared.updateUser(userId, username, discordTag, profileImageUrl) { success, updatedUser, message ->
+        Model.shared.updateUser(currentUser, username, discordTag, profileImageUrl) { success, updatedUser, message ->
             saveBtn.isEnabled = true
             saveBtn.text = "Save Changes"
 

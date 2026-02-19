@@ -40,11 +40,11 @@
     </LinearLayout>
 
     <EditText
-        android:id="@+id/signin_username"
+        android:id="@+id/signin_email"
         android:layout_width="300dp"
         android:layout_height="48dp"
-        android:hint="Username"
-        android:inputType="text"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
         android:padding="12dp"
         android:layout_marginBottom="16dp"
         android:background="@drawable/edit_text_background" />

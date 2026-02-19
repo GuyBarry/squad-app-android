@@ -14,23 +14,30 @@ data class User(
     val id: String,
     val profileImage: String,  // profile image URL from Firebase Storage
     val username: String,
+    val email: String,
     val discordTag: String
 ) : Parcelable {
     companion object {
         const val EXTRA_USER = "extra_user"
 
+        // Firestore field keys
+        const val USER_ID = "id"
+        const val USER_PROFILE_IMAGE = "profileImage"
+        const val USER_USERNAME = "username"
+        const val USER_EMAIL = "email"
+        const val USER_DISCORD_TAG = "discordTag"
+
         /**
-         * Creates a User from a UserDTO (removes password)
+         * Creates a User from a map of Firestore document fields
          */
-        fun fromUserDTO(userDTO: UserDTO): User {
+        fun deserializeUser(data: Map<String, Any?>): User {
             return User(
-                id = userDTO.id,
-                profileImage = userDTO.profileImage,
-                username = userDTO.username,
-                discordTag = userDTO.discordTag
+                id = data[USER_ID] as? String ?: "",
+                profileImage = data[USER_PROFILE_IMAGE] as? String ?: "",
+                username = data[USER_USERNAME] as? String ?: "",
+                email = data[USER_EMAIL] as? String ?: "",
+                discordTag = data[USER_DISCORD_TAG] as? String ?: ""
             )
         }
     }
 }
-
-

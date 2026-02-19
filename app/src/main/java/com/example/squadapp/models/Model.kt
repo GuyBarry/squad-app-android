@@ -10,15 +10,21 @@ import com.example.squadapp.base.ResultCompletion
 import com.example.squadapp.base.UploadPictureCompletion
 import com.example.squadapp.entities.NewPost
 import com.example.squadapp.entities.NewUser
+import com.example.squadapp.entities.User
 
 class Model private constructor() {
 
     private val rawgApiClient = RawgApiClient()
     private val firebaseModel = FirebaseModel()
+    private val firebaseAuthModel = FirebaseAuthModel()
     private val firebaseStorageModel = FirebaseStorageModel()
 
     companion object {
         val shared = Model()
+    }
+
+    fun getCurrentUser(completion: AuthCompletion) {
+        firebaseAuthModel.getCurrentUser(completion)
     }
 
     fun getAllPosts(completion: PostsCompletion) {
@@ -43,30 +49,33 @@ class Model private constructor() {
 
     fun deletePost(postId: String, imageUrl: String, completion: ResultCompletion) {
         if (imageUrl.isNotEmpty()) {
-            firebaseStorageModel.deletePicture(imageUrl) { success, _ -> }
+            firebaseStorageModel.deletePicture(imageUrl) { _, _ -> }
         }
 
         firebaseModel.deletePost(postId, completion)
     }
 
-    fun signUpUser(newUser: NewUser, completion: AuthCompletion) {
-        firebaseModel.signUpUser(newUser, completion)
+    fun signUpUser(password: String, newUser: NewUser, completion: AuthCompletion) {
+        firebaseAuthModel.signUpUser(password, newUser, completion)
     }
 
-    fun signInUser(username: String, password: String, completion: AuthCompletion) {
-        firebaseModel.signInUser(username, password, completion)
+    fun signInUser(email: String, password: String, completion: AuthCompletion) {
+        firebaseAuthModel.signInUser(email, password, completion)
     }
 
     fun updateUser(
-        userId: String,
+        currentUser: User,
         username: String,
         discordTag: String,
         profileImageUrl: String? = null,
         completion: AuthCompletion
     ) {
-        firebaseModel.updateUser(userId, username, discordTag, profileImageUrl, completion)
+        firebaseAuthModel.updateUser(currentUser, username, discordTag, profileImageUrl, completion)
     }
 
+    fun signOut() {
+        firebaseAuthModel.signOut()
+    }
 
     fun uploadProfilePicture(
         imageUri: Uri,

@@ -1,7 +1,6 @@
 package com.example.squadapp.models
 
 import android.util.Log
-import com.example.squadapp.base.AuthCompletion
 import com.example.squadapp.base.PostsCompletion
 import com.example.squadapp.base.ResultCompletion
 import com.example.squadapp.entities.Post
@@ -10,11 +9,8 @@ import com.example.squadapp.entities.Post.Companion.POST_DESCRIPTION
 import com.example.squadapp.entities.Post.Companion.POST_IMAGE
 import com.example.squadapp.entities.Post.Companion.POST_USER
 import com.example.squadapp.entities.NewPost
-import com.example.squadapp.entities.NewUser
 import com.example.squadapp.entities.User
-import com.example.squadapp.entities.UserDTO
-import com.example.squadapp.entities.UserDTO.Companion.deserializeUser
-import com.example.squadapp.utils.PasswordHasher
+import com.example.squadapp.entities.User.Companion.deserializeUser
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import com.google.firebase.Timestamp
@@ -145,9 +141,7 @@ class FirebaseModel {
                 db.collection(USERS).document(userId).get()
                     .addOnSuccessListener { userDocument ->
                         if (userDocument.exists()) {
-                            val userDTO = deserializeUser(userDocument.data ?: emptyMap())
-                            // Convert UserDTO to User (remove password)
-                            val user = User.fromUserDTO(userDTO)
+                            val user = deserializeUser(userDocument.data ?: emptyMap()).copy(id = userId)
 
                             // Step 4: Create posts with user data
                             val usersMap = mapOf(userId to user)
@@ -193,9 +187,7 @@ class FirebaseModel {
             db.collection(USERS).document(userId).get()
                 .addOnSuccessListener { userDocument ->
                     if (userDocument.exists()) {
-                        val userDTO = deserializeUser(userDocument.data ?: emptyMap())
-                        // Convert UserDTO to User (remove password)
-                        val user = User.fromUserDTO(userDTO)
+                        val user = deserializeUser(userDocument.data ?: emptyMap()).copy(id = userId)
                         usersMap[userId] = user
                         foundUserIds.add(userId)
                         Log.d("FirebaseModel", "Fetched user: $userId")
@@ -280,157 +272,6 @@ class FirebaseModel {
             .addOnFailureListener { exception ->
                 Log.e("FirebaseModel", "Error deleting post: ${exception.message}")
                 completion(false, "Failed to delete post: ${exception.message}")
-            }
-    }
-
-    fun signUpUser(newUser: NewUser, completion: AuthCompletion) {
-        // Check if username already exists
-        db.collection(USERS)
-            .whereEqualTo(UserDTO.USER_USERNAME, newUser.username)
-            .get()
-            .addOnSuccessListener { querySnapshot ->
-                if (!querySnapshot.isEmpty) {
-                    Log.d("FirebaseModel", "Username already exists: ${newUser.username}")
-                    completion(false, null, "Username already taken")
-                } else {
-                    // Hash the password using NewUser utility function
-                    val hashedNewUser = NewUser.withHashedPassword(newUser)
-
-                    val userData = NewUser.serialize(hashedNewUser)
-
-                    db.collection(USERS).add(userData)
-                        .addOnSuccessListener { documentReference ->
-                            val userId = documentReference.id
-                            // Create User object for return (without password)
-                            val user = User(
-                                id = userId,
-                                profileImage = newUser.profileImage,
-                                username = newUser.username,
-                                discordTag = newUser.discordTag
-                            )
-                            Log.d("FirebaseModel", "User created successfully with ID: $userId")
-                            completion(true, user, "Sign up successful!")
-                        }
-                        .addOnFailureListener { exception ->
-                            Log.e("FirebaseModel", "Error creating user: ${exception.message}")
-                            completion(
-                                false,
-                                null,
-                                "Failed to create account: ${exception.message}"
-                            )
-                        }
-                }
-            }
-            .addOnFailureListener { exception ->
-                Log.e("FirebaseModel", "Error checking username: ${exception.message}")
-                completion(false, null, "Failed to check username: ${exception.message}")
-            }
-    }
-
-    fun signInUser(username: String, password: String, completion: AuthCompletion) {
-        // Query by username only (can't query hashed passwords directly)
-        db.collection(USERS)
-            .whereEqualTo(UserDTO.USER_USERNAME, username)
-            .get()
-            .addOnSuccessListener { querySnapshot ->
-                if (querySnapshot.isEmpty) {
-                    Log.d("FirebaseModel", "Username not found: $username")
-                    completion(false, null, "Invalid username or password")
-                } else {
-                    val userDocument = querySnapshot.documents.first()
-                    val userData = userDocument.data ?: emptyMap()
-                    val storedPasswordHash = userData[UserDTO.USER_PASSWORD] as? String ?: ""
-
-                    // Verify the password against the stored hash
-                    if (PasswordHasher.verifyPassword(password, storedPasswordHash)) {
-                        val userDTO = deserializeUser(userData).copy(id = userDocument.id)
-                        // Convert UserDTO to User (without password) for return
-                        val user = User.fromUserDTO(userDTO)
-                        Log.d("FirebaseModel", "User signed in successfully: ${user.username}")
-                        completion(true, user, "Sign in successful!")
-                    } else {
-                        Log.d("FirebaseModel", "Invalid password for username: $username")
-                        completion(false, null, "Invalid username or password")
-                    }
-                }
-            }
-            .addOnFailureListener { exception ->
-                Log.e("FirebaseModel", "Error signing in: ${exception.message}")
-                completion(false, null, "Failed to sign in: ${exception.message}")
-            }
-    }
-
-    fun updateUser(
-        userId: String,
-        username: String,
-        discordTag: String,
-        profileImageUrl: String? = null,
-        completion: AuthCompletion
-    ) {
-        // Check if new username is already taken by another user
-        db.collection(USERS)
-            .whereEqualTo(UserDTO.USER_USERNAME, username)
-            .get()
-            .addOnSuccessListener { querySnapshot ->
-                val usernameExists = querySnapshot.documents.any { it.id != userId }
-
-                if (usernameExists) {
-                    Log.d("FirebaseModel", "Username already taken: $username")
-                    completion(false, null, "Username already taken")
-                } else {
-                    // Update user document
-                    val updates = hashMapOf<String, Any>(
-                        UserDTO.USER_USERNAME to username,
-                        UserDTO.USER_DISCORD_TAG to discordTag
-                    )
-
-                    // Add profile image URL to updates if provided
-                    if (profileImageUrl != null) {
-                        updates[UserDTO.USER_PROFILE_IMAGE] = profileImageUrl
-                    }
-
-                    db.collection(USERS).document(userId)
-                        .update(updates)
-                        .addOnSuccessListener {
-                            // Fetch updated user data
-                            db.collection(USERS).document(userId).get()
-                                .addOnSuccessListener { userDocument ->
-                                    if (userDocument.exists()) {
-                                        val userDTO =
-                                            deserializeUser(userDocument.data ?: emptyMap())
-                                                .copy(id = userId)
-                                        val user = User.fromUserDTO(userDTO)
-                                        Log.d("FirebaseModel", "User updated successfully: $userId")
-                                        completion(true, user, "Profile updated successfully!")
-                                    } else {
-                                        completion(false, null, "Failed to fetch updated user data")
-                                    }
-                                }
-                                .addOnFailureListener { exception ->
-                                    Log.e(
-                                        "FirebaseModel",
-                                        "Error fetching updated user: ${exception.message}"
-                                    )
-                                    completion(
-                                        false,
-                                        null,
-                                        "Failed to fetch updated data: ${exception.message}"
-                                    )
-                                }
-                        }
-                        .addOnFailureListener { exception ->
-                            Log.e("FirebaseModel", "Error updating user: ${exception.message}")
-                            completion(
-                                false,
-                                null,
-                                "Failed to update profile: ${exception.message}"
-                            )
-                        }
-                }
-            }
-            .addOnFailureListener { exception ->
-                Log.e("FirebaseModel", "Error checking username: ${exception.message}")
-                completion(false, null, "Failed to check username: ${exception.message}")
             }
     }
 }
