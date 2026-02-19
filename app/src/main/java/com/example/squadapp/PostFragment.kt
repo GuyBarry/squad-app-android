@@ -157,8 +157,6 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             cancelImageButton.isEnabled = !isPublishing
             if (isPublishing) {
                 view.clearFocus()
-                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.hideSoftInputFromWindow(view.windowToken, 0)
             }
         }
 

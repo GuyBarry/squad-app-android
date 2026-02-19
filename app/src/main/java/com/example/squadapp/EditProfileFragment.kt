@@ -118,8 +118,6 @@ class EditProfileFragment : Fragment() {
             deleteImageButton.isEnabled = !isSaving
             if (isSaving) {
                 view.clearFocus()
-                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.hideSoftInputFromWindow(view.windowToken, 0)
             }
         }
 
