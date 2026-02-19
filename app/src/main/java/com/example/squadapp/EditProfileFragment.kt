@@ -116,6 +116,13 @@ class EditProfileFragment : Fragment() {
         // Observe saving state
         editProfileViewModel.isSaving.observe(viewLifecycleOwner) { isSaving ->
             saveBtn.isEnabled = !isSaving
+            cancelBtn.isEnabled = !isSaving
+            userNameInput.isEnabled = !isSaving
+            discordTagInput.isEnabled = !isSaving
+            galleryButton.isEnabled = !isSaving
+            cameraButton.isEnabled = !isSaving
+            cancelImageButton.isEnabled = !isSaving
+            deleteImageButton.isEnabled = !isSaving
         }
 
         editProfileViewModel.saveProgress.observe(viewLifecycleOwner) { progress ->

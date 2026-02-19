@@ -47,6 +47,8 @@ class SignInFragment : Fragment() {
         signInViewModel.isSigningIn.observe(viewLifecycleOwner) { isLoading ->
             signInButton.isEnabled = !isLoading
             signInButton.text = if (isLoading) getString(R.string.signing_in) else getString(R.string.sign_in)
+            emailEditText.isEnabled = !isLoading
+            passwordEditText.isEnabled = !isLoading
         }
 
         signInViewModel.signInResult.observe(viewLifecycleOwner) { (success, message) ->

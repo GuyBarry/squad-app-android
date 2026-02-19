@@ -38,6 +38,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     private lateinit var galleryButton: MaterialButton
     private lateinit var cameraButton: MaterialButton
     private lateinit var gameSearchInput: TextInputEditText
+    private lateinit var descriptionInput: TextInputEditText
     private lateinit var gamesListRecycler: RecyclerView
     private lateinit var gameListAdapter: GameListAdapter
     private lateinit var publishBtn: MaterialButton
@@ -111,6 +112,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         galleryButton = view.findViewById(R.id.gallery_button)
         cameraButton = view.findViewById(R.id.camera_button)
         gameSearchInput = view.findViewById(R.id.squad_search_input)
+        descriptionInput = view.findViewById(R.id.description_text)
         gamesListRecycler = view.findViewById(R.id.games_list_recycler)
         publishBtn = view.findViewById(R.id.publish_btn)
 
@@ -147,6 +149,11 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         // Observe publishing state
         postViewModel.isPublishing.observe(viewLifecycleOwner) { isPublishing ->
             publishBtn.isEnabled = !isPublishing
+            descriptionInput.isEnabled = !isPublishing
+            gameSearchInput.isEnabled = !isPublishing
+            galleryButton.isEnabled = !isPublishing
+            cameraButton.isEnabled = !isPublishing
+            cancelImageButton.isEnabled = !isPublishing
         }
 
         postViewModel.publishProgress.observe(viewLifecycleOwner) { progress ->
