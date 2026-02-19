@@ -49,8 +49,8 @@ class Model private constructor() {
         firebaseModel.deletePost(postId, completion)
     }
 
-    fun signUpUser(email: String, password: String, newUser: NewUser, completion: AuthCompletion) {
-        firebaseModel.signUpUser(email, password, newUser, completion)
+    fun signUpUser(password: String, newUser: NewUser, completion: AuthCompletion) {
+        firebaseModel.signUpUser(password, newUser, completion)
     }
 
     fun signInUser(email: String, password: String, completion: AuthCompletion) {

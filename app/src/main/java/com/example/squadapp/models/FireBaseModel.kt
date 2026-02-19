@@ -279,33 +279,67 @@ class FirebaseModel {
             }
     }
 
-    fun signUpUser(email: String, password: String, newUser: NewUser, completion: AuthCompletion) {
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnSuccessListener { authResult ->
-                val uid = authResult.user!!.uid
-                val userData = NewUser.serialize(newUser)
+    fun signUpUser(password: String, newUser: NewUser, completion: AuthCompletion) {
+        // Step 1: Check if username is already taken
+        db.collection(USERS)
+            .whereEqualTo(User.USER_USERNAME, newUser.username)
+            .get()
+            .addOnSuccessListener { usernameSnapshot ->
+                if (!usernameSnapshot.isEmpty) {
+                    Log.d("FirebaseModel", "Username already exists: ${newUser.username}")
+                    completion(false, null, "Username already taken")
+                    return@addOnSuccessListener
+                }
 
-                db.collection(USERS).document(uid).set(userData)
-                    .addOnSuccessListener {
-                        val user = User(
-                            id = uid,
-                            profileImage = newUser.profileImage,
-                            username = newUser.username,
-                            discordTag = newUser.discordTag
-                        )
-                        Log.d("FirebaseModel", "User created successfully with ID: $uid")
-                        completion(true, user, "Sign up successful!")
+                // Step 2: Check if email is already registered in Firestore
+                db.collection(USERS)
+                    .whereEqualTo(User.USER_EMAIL, newUser.email)
+                    .get()
+                    .addOnSuccessListener { emailSnapshot ->
+                        if (!emailSnapshot.isEmpty) {
+                            Log.d("FirebaseModel", "Email already registered: ${newUser.email}")
+                            completion(false, null, "An account with this email already exists")
+                            return@addOnSuccessListener
+                        }
+
+                        // Step 3: Create Firebase Auth account
+                        auth.createUserWithEmailAndPassword(newUser.email, password)
+                            .addOnSuccessListener { authResult ->
+                                val uid = authResult.user!!.uid
+                                val userData = NewUser.serialize(newUser)
+
+                                db.collection(USERS).document(uid).set(userData)
+                                    .addOnSuccessListener {
+                                        val user = User(
+                                            id = uid,
+                                            profileImage = newUser.profileImage,
+                                            username = newUser.username,
+                                            email = newUser.email,
+                                            discordTag = newUser.discordTag
+                                        )
+                                        Log.d("FirebaseModel", "User created successfully with ID: $uid")
+                                        completion(true, user, "Sign up successful!")
+                                    }
+                                    .addOnFailureListener { exception ->
+                                        // Auth account was created but Firestore save failed – clean up auth user
+                                        authResult.user?.delete()
+                                        Log.e("FirebaseModel", "Error saving user profile: ${exception.message}")
+                                        completion(false, null, "Failed to create account: ${exception.message}")
+                                    }
+                            }
+                            .addOnFailureListener { exception ->
+                                Log.e("FirebaseModel", "Error creating auth user: ${exception.message}")
+                                completion(false, null, exception.localizedMessage ?: "Failed to create account")
+                            }
                     }
                     .addOnFailureListener { exception ->
-                        // Auth account was created but Firestore save failed – clean up auth user
-                        authResult.user?.delete()
-                        Log.e("FirebaseModel", "Error saving user profile: ${exception.message}")
-                        completion(false, null, "Failed to create account: ${exception.message}")
+                        Log.e("FirebaseModel", "Error checking email: ${exception.message}")
+                        completion(false, null, "Failed to check email: ${exception.message}")
                     }
             }
             .addOnFailureListener { exception ->
-                Log.e("FirebaseModel", "Error creating auth user: ${exception.message}")
-                completion(false, null, exception.localizedMessage ?: "Failed to create account")
+                Log.e("FirebaseModel", "Error checking username: ${exception.message}")
+                completion(false, null, "Failed to check username: ${exception.message}")
             }
     }
 

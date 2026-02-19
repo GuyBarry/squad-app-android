@@ -14,6 +14,7 @@ data class User(
     val id: String,
     val profileImage: String,  // profile image URL from Firebase Storage
     val username: String,
+    val email: String,
     val discordTag: String
 ) : Parcelable {
     companion object {
@@ -23,6 +24,7 @@ data class User(
         const val USER_ID = "id"
         const val USER_PROFILE_IMAGE = "profileImage"
         const val USER_USERNAME = "username"
+        const val USER_EMAIL = "email"
         const val USER_DISCORD_TAG = "discordTag"
 
         /**
@@ -33,19 +35,8 @@ data class User(
                 id = data[USER_ID] as? String ?: "",
                 profileImage = data[USER_PROFILE_IMAGE] as? String ?: "",
                 username = data[USER_USERNAME] as? String ?: "",
+                email = data[USER_EMAIL] as? String ?: "",
                 discordTag = data[USER_DISCORD_TAG] as? String ?: ""
-            )
-        }
-
-        /**
-         * Converts a User to a map of Firestore document fields
-         */
-        fun serializeUser(user: User): Map<String, Any?> {
-            return hashMapOf(
-                USER_ID to user.id,
-                USER_PROFILE_IMAGE to user.profileImage,
-                USER_USERNAME to user.username,
-                USER_DISCORD_TAG to user.discordTag
             )
         }
     }

@@ -129,11 +129,12 @@ class SignUpFragment : Fragment() {
         val newUser = NewUser(
             profileImage = "", // Empty URL - user can add profile picture later
             username = username,
+            email = email,
             discordTag = discordTag
         )
 
         // Create account with Firebase Auth, then save profile to Firestore
-        Model.shared.signUpUser(email, password, newUser) { success, user, message ->
+        Model.shared.signUpUser(password, newUser) { success, user, message ->
             signUpButton.isEnabled = true
             signUpButton.text = getString(R.string.sign_up)
 

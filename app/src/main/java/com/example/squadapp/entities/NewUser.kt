@@ -8,6 +8,7 @@ package com.example.squadapp.entities
 data class NewUser(
     val profileImage: String,  // profile image URL from Firebase Storage
     val username: String,
+    val email: String,
     val discordTag: String
 ) {
     companion object {
@@ -18,6 +19,7 @@ data class NewUser(
             return hashMapOf(
                 User.USER_PROFILE_IMAGE to newUser.profileImage,
                 User.USER_USERNAME to newUser.username,
+                User.USER_EMAIL to newUser.email,
                 User.USER_DISCORD_TAG to newUser.discordTag
             )
         }
