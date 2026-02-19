@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
 class AuthViewModel : ViewModel() {
-
     private val _navigateToMain = MutableSharedFlow<User>(extraBufferCapacity = 1)
     val navigateToMain = _navigateToMain.asSharedFlow()
 
@@ -14,4 +13,3 @@ class AuthViewModel : ViewModel() {
         _navigateToMain.tryEmit(user)
     }
 }
-

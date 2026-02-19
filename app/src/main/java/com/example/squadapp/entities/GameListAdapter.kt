@@ -1,3 +1,6 @@
+package com.example.squadapp.entities
+
+import Game
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -48,4 +51,3 @@ class GameListAdapter(
 
     override fun getItemCount(): Int = games.size
 }
-
