@@ -27,8 +27,24 @@ class EditPostViewModel : ViewModel() {
     private val _publishResult = MutableLiveData<Pair<Boolean, String>>()
     val publishResult: LiveData<Pair<Boolean, String>> = _publishResult
 
+    /** True while the initial game data is being fetched from the API. */
+    private val _isLoadingData = MutableLiveData<Boolean>(true)
+    val isLoadingData: LiveData<Boolean> = _isLoadingData
+
     var selectedGame: RawgGame? = null
     var inputChangeCounter = 0
+
+    /** Fetches game data for the given gameId and marks loading complete. */
+    fun loadPostData(gameId: Int) {
+        _isLoadingData.value = true
+        Model.shared.searchGameById(gameId) { rawgGame ->
+            if (rawgGame != null) {
+                selectedGame = rawgGame
+                inputChangeCounter = 0
+            }
+            _isLoadingData.postValue(false)
+        }
+    }
 
     fun searchGames(query: String) {
         Model.shared.searchGames(query) { rawgGames ->

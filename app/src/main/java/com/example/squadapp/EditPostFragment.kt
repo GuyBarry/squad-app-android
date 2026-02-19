@@ -44,6 +44,8 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
     private lateinit var gamesListRecycler: RecyclerView
     private lateinit var gameListAdapter: GameListAdapter
     private lateinit var publishBtn: MaterialButton
+    private lateinit var loadingIndicator: View
+    private lateinit var contentView: View
 
     private var selectedImageUri: Uri? = null
     private var imageChanged = false
@@ -123,10 +125,21 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
         descriptionInput = view.findViewById(R.id.description_text)
         gamesListRecycler = view.findViewById(R.id.games_list_recycler)
         publishBtn = view.findViewById(R.id.publish_btn)
+        loadingIndicator = view.findViewById(R.id.edit_post_loading_indicator)
+        contentView = view.findViewById(R.id.edit_post_content)
 
         setupGamesList()
         setupSearchInput()
         initializeWithPostData(post)
+
+        // Show loader until game data is ready, then reveal form
+        editPostViewModel.isLoadingData.observe(viewLifecycleOwner) { isLoading ->
+            loadingIndicator.visibility = if (isLoading) View.VISIBLE else View.GONE
+            contentView.visibility = if (isLoading) View.GONE else View.VISIBLE
+        }
+
+        // Kick off the async game fetch
+        editPostViewModel.loadPostData(post.gameId)
 
         galleryButton.setOnClickListener { openGallery() }
         cameraButton.setOnClickListener { openCamera() }
@@ -186,7 +199,7 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
     }
 
     private fun initializeWithPostData(post: com.example.squadapp.entities.Post) {
-        // Load existing image
+        // Load existing image via Glide
         Glide.with(this)
             .load(post.image)
             .placeholder(R.drawable.post_image_placeholder_2)
@@ -196,16 +209,15 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
         imagePlaceholder.visibility = View.GONE
         cancelImageButton.visibility = View.VISIBLE
 
-        // Set description
+        // Pre-fill description
         descriptionInput.setText(post.description)
 
-        // Load game data from API and pre-select it
-        com.example.squadapp.models.Model.shared.searchGameById(post.gameId) { rawgGame ->
-            if (rawgGame != null) {
-                editPostViewModel.selectedGame = rawgGame
-                editPostViewModel.inputChangeCounter = 0
-                activity?.runOnUiThread {
-                    gameSearchInput.setText(rawgGame.name, TextView.BufferType.EDITABLE)
+        // Game name is set once isLoadingData turns false (see observer in onViewCreated)
+        editPostViewModel.isLoadingData.observe(viewLifecycleOwner) { isLoading ->
+            if (!isLoading) {
+                val gameName = editPostViewModel.selectedGame?.name ?: return@observe
+                if (gameSearchInput.text.toString() != gameName) {
+                    gameSearchInput.setText(gameName, TextView.BufferType.EDITABLE)
                 }
             }
         }
