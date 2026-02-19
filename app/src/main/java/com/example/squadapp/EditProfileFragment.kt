@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import com.google.android.material.button.MaterialButton
 import java.util.Date
@@ -24,6 +25,7 @@ class EditProfileFragment : Fragment() {
 
     private val mainViewModel: MainViewModel by activityViewModels()
     private val editProfileViewModel: EditProfileViewModel by viewModels()
+    private val args: EditProfileFragmentArgs by navArgs()
 
     private lateinit var profilePhoto: ImageView
     private lateinit var galleryButton: com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -94,17 +96,17 @@ class EditProfileFragment : Fragment() {
         cancelBtn = view.findViewById(R.id.cancel_btn)
         saveBtn = view.findViewById(R.id.save_btn)
 
-        // Populate fields from the shared MainViewModel
-        mainViewModel.currentUser.value?.let { user ->
-            originalImageUrl = user.profileImage
-            Glide.with(this).load(user.profileImage)
-                .placeholder(R.drawable.user_profile_placeholder)
-                .error(R.drawable.user_profile_placeholder)
-                .circleCrop().into(profilePhoto)
-            userNameInput.setText(user.username)
-            discordTagInput.setText(user.discordTag)
-            if (user.profileImage.isNotEmpty()) deleteImageButton.visibility = View.VISIBLE
-        }
+        // Populate fields from the User passed via SafeArgs
+        val user = args.user
+        mainViewModel.setUser(user)
+        originalImageUrl = user.profileImage
+        Glide.with(this).load(user.profileImage)
+            .placeholder(R.drawable.user_profile_placeholder)
+            .error(R.drawable.user_profile_placeholder)
+            .circleCrop().into(profilePhoto)
+        userNameInput.setText(user.username)
+        discordTagInput.setText(user.discordTag)
+        if (user.profileImage.isNotEmpty()) deleteImageButton.visibility = View.VISIBLE
 
         galleryButton.setOnClickListener { galleryLauncher.launch("image/*") }
         cameraButton.setOnClickListener { openCamera() }

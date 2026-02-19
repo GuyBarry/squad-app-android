@@ -10,6 +10,9 @@
         android:name="com.example.squadapp.HomeFragment"
         android:label="Home"
         tools:layout="@layout/fragment_home" >
+        <argument
+            android:name="user"
+            app:argType="com.example.squadapp.entities.User" />
         <action
             android:id="@+id/action_homeFragment_to_postFragment"
             app:destination="@id/postFragment" />
@@ -52,6 +55,9 @@
         android:name="com.example.squadapp.EditProfileFragment"
         android:label="Edit Profile"
         tools:layout="@layout/fragment_edit_profile" >
+        <argument
+            android:name="user"
+            app:argType="com.example.squadapp.entities.User" />
         <action
             android:id="@+id/action_editProfileFragment_to_profileFragment"
             app:destination="@id/profileFragment" />

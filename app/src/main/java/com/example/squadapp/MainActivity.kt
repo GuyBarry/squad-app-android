@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        // Get user object from Intent and push into the shared ViewModel
+        // Get user object from Intent
         val user = intent.getParcelableExtra(User.EXTRA_USER, User::class.java)!!
         mainViewModel.setUser(user)
 
@@ -36,12 +36,17 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.nav_host_fragment_main) as NavHostFragment
         navController = navHostFragment.navController
 
+        // Pass the user to the start destination (HomeFragment) via SafeArgs
+        val startDestinationArgs = HomeFragmentArgs(user = user).toBundle()
+        navController.setGraph(R.navigation.nav_main, startDestinationArgs)
+
         // Set up bottom navigation with NavController
         val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigation.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_home -> {
-                    navController.navigate(R.id.homeFragment)
+                    val currentUser = mainViewModel.currentUser.value ?: user
+                    navController.navigate(R.id.homeFragment, HomeFragmentArgs(user = currentUser).toBundle())
                     true
                 }
                 R.id.nav_post -> {
@@ -71,3 +76,4 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp() || super.onSupportNavigateUp()
     }
 }
+

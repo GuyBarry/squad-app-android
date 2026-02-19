@@ -60,3 +60,4 @@ gms-google-services = { id = "com.google.gms.google-services", version.ref = "go
 google-services = { id = "com.google.gms.google-services" }
 kotlin-kapt = { id = "kotlin-kapt" }
 kotlin-parcelize = { id = "kotlin-parcelize" }
+navigation-safeargs = { id = "androidx.navigation.safeargs.kotlin", version.ref = "navigation" }

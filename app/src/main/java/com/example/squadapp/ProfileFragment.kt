@@ -95,7 +95,9 @@ class ProfileFragment : Fragment() {
         }
 
         editProfileBtn.setOnClickListener {
-            findNavController().navigate(R.id.action_profileFragment_to_editProfileFragment)
+            val user = mainViewModel.currentUser.value ?: return@setOnClickListener
+            val action = ProfileFragmentDirections.actionProfileFragmentToEditProfileFragment(user = user)
+            findNavController().navigate(action)
         }
 
         logoutBtn.setOnClickListener {

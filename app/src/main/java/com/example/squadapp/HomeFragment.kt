@@ -5,7 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.squadapp.entities.PostAdapter
@@ -13,6 +15,8 @@ import com.example.squadapp.entities.PostAdapter
 class HomeFragment : Fragment() {
 
     private val homeViewModel: HomeViewModel by viewModels()
+    private val mainViewModel: MainViewModel by activityViewModels()
+    private val args: HomeFragmentArgs by navArgs()
 
     private var recyclerView: RecyclerView? = null
     private var loadingIndicator: View? = null
@@ -27,6 +31,12 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Seed the shared ViewModel with the user received via SafeArgs,
+        // but only if it hasn't been set yet (avoids overwriting a post-edit update)
+        if (mainViewModel.currentUser.value == null) {
+            mainViewModel.setUser(args.user)
+        }
 
         recyclerView = view.findViewById(R.id.posts_recycler_view)
         recyclerView?.layoutManager = LinearLayoutManager(requireContext())
