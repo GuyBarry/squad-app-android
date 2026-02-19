@@ -28,6 +28,31 @@ class FirebaseModel {
         const val USERS = "users"
     }
 
+    fun getCurrentUser(completion: AuthCompletion) {
+        val firebaseUser = auth.currentUser
+        if (firebaseUser == null) {
+            completion(false, null, null)
+            return
+        }
+        val uid = firebaseUser.uid
+
+        db.collection(USERS).document(uid).get()
+            .addOnSuccessListener { userDocument ->
+                if (userDocument.exists()) {
+                    val user = deserializeUser(userDocument.data ?: emptyMap()).copy(id = uid)
+                    Log.d("FirebaseModel", "Restored session for user: ${user.username}")
+                    completion(true, user, null)
+                } else {
+                    Log.w("FirebaseModel", "Auth session found but Firestore profile missing: $uid")
+                    completion(false, null, null)
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("FirebaseModel", "Error fetching current user profile: ${exception.message}")
+                completion(false, null, exception.message)
+            }
+    }
+
     fun getAllPosts(completion: PostsCompletion) {
         // Step 1: Fetch all posts
         db.collection(POSTS).get().addOnSuccessListener { querySnapshot ->

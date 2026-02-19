@@ -21,6 +21,10 @@ class Model private constructor() {
         val shared = Model()
     }
 
+    fun getCurrentUser(completion: AuthCompletion) {
+        firebaseModel.getCurrentUser(completion)
+    }
+
     fun getAllPosts(completion: PostsCompletion) {
         firebaseModel.getAllPosts(completion)
     }
@@ -43,7 +47,7 @@ class Model private constructor() {
 
     fun deletePost(postId: String, imageUrl: String, completion: ResultCompletion) {
         if (imageUrl.isNotEmpty()) {
-            firebaseStorageModel.deletePicture(imageUrl) { success, _ -> }
+            firebaseStorageModel.deletePicture(imageUrl) { _, _ -> }
         }
 
         firebaseModel.deletePost(postId, completion)
