@@ -20,7 +20,7 @@ import com.example.squadapp.entities.User
 import com.example.squadapp.models.Model
 
 class SignInFragment : Fragment() {
-    private lateinit var usernameEditText: EditText
+    private lateinit var emailEditText: EditText
     private lateinit var passwordEditText: EditText
     private lateinit var signInButton: Button
     private lateinit var signUpLink: TextView
@@ -36,7 +36,7 @@ class SignInFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        usernameEditText = view.findViewById(R.id.signin_username)
+        emailEditText = view.findViewById(R.id.signin_email)
         passwordEditText = view.findViewById(R.id.signin_password)
         signInButton = view.findViewById(R.id.signin_button)
         signUpLink = view.findViewById(R.id.signin_signup_link)
@@ -79,12 +79,12 @@ class SignInFragment : Fragment() {
     }
 
     private fun handleSignIn() {
-        val username = usernameEditText.text.toString().trim()
+        val email = emailEditText.text.toString().trim()
         val password = passwordEditText.text.toString().trim()
 
         // Validation
-        if (username.isEmpty()) {
-            Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
+        if (email.isEmpty()) {
+            Toast.makeText(context, "Email cannot be empty", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -98,7 +98,7 @@ class SignInFragment : Fragment() {
         signInButton.text = getString(R.string.signing_in)
 
         // Authenticate user with Firebase
-        Model.shared.signInUser(username, password) { success, user, message ->
+        Model.shared.signInUser(email, password) { success, user, message ->
             signInButton.isEnabled = true
             signInButton.text = getString(R.string.sign_in)
 
@@ -124,5 +124,3 @@ class SignInFragment : Fragment() {
         }
     }
 }
-
-

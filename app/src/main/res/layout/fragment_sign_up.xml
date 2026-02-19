@@ -50,6 +50,16 @@
         android:background="@drawable/edit_text_background" />
 
     <EditText
+        android:id="@+id/signup_email"
+        android:layout_width="300dp"
+        android:layout_height="48dp"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/edit_text_background" />
+
+    <EditText
         android:id="@+id/signup_discord_tag"
         android:layout_width="300dp"
         android:layout_height="48dp"
