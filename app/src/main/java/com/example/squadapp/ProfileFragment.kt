@@ -72,9 +72,19 @@ class ProfileFragment : Fragment() {
             } else {
                 noPostsMessage.visibility = View.GONE
                 userPostsRecyclerView.visibility = View.VISIBLE
-                userPostsRecyclerView.adapter = PostAdapter(posts) { postToDelete ->
-                    profileViewModel.deletePost(postToDelete.id, postToDelete.image, user.id)
-                }
+                userPostsRecyclerView.adapter = PostAdapter(
+                    posts,
+                    onDeletePost = { postToDelete ->
+                        profileViewModel.deletePost(postToDelete.id, postToDelete.image, user.id)
+                    },
+                    onEditPost = { postToEdit ->
+                        val action = ProfileFragmentDirections.actionProfileFragmentToEditPostFragment(
+                            post = postToEdit,
+                            user = user
+                        )
+                        findNavController().navigate(action)
+                    }
+                )
             }
         }
 

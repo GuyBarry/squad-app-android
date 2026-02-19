@@ -168,7 +168,7 @@
         android:gravity="start|center_vertical"
         android:orientation="horizontal">
 
-        <!-- Copy Discord Button -->
+        <!-- Copy Discord Button (shown in home feed) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/copy_discord_btn"
             android:layout_width="0dp"
@@ -182,6 +182,22 @@
             app:cornerRadius="8dp"
             app:icon="@drawable/ic_copy"
             app:iconTint="@color/black" />
+
+        <!-- Edit Button (hidden by default, shown only in profile) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/edit_post_btn"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/primary"
+            android:text="@string/edit"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            app:cornerRadius="8dp"
+            app:icon="@drawable/ic_edit"
+            app:iconTint="@color/black"
+            android:visibility="gone" />
 
         <!-- Delete Button (hidden by default, shown only in profile) -->
         <com.google.android.material.button.MaterialButton
