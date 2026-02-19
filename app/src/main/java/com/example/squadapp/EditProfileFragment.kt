@@ -13,7 +13,6 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -22,8 +21,6 @@ import com.google.android.material.button.MaterialButton
 import java.util.Date
 
 class EditProfileFragment : Fragment() {
-
-    private val mainViewModel: MainViewModel by activityViewModels()
     private val editProfileViewModel: EditProfileViewModel by viewModels()
     private val args: EditProfileFragmentArgs by navArgs()
 
@@ -41,9 +38,7 @@ class EditProfileFragment : Fragment() {
     private var originalImageUrl: String = ""
     private var isImageDeleted: Boolean = false
 
-    private val galleryLauncher = registerForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
+    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
             selectedImageUri = uri
             isImageDeleted = false
@@ -57,9 +52,7 @@ class EditProfileFragment : Fragment() {
         }
     }
 
-    private val takePictureLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK && selectedImageUri != null) {
             isImageDeleted = false
             Glide.with(this).load(selectedImageUri)
@@ -72,9 +65,7 @@ class EditProfileFragment : Fragment() {
         }
     }
 
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         if (isGranted) launchCamera()
         else Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_LONG).show()
     }
@@ -96,9 +87,8 @@ class EditProfileFragment : Fragment() {
         cancelBtn = view.findViewById(R.id.cancel_btn)
         saveBtn = view.findViewById(R.id.save_btn)
 
-        // Populate fields from the User passed via SafeArgs
+        // Populate fields from SafeArgs
         val user = args.user
-        mainViewModel.setUser(user)
         originalImageUrl = user.profileImage
         Glide.with(this).load(user.profileImage)
             .placeholder(R.drawable.user_profile_placeholder)
@@ -115,7 +105,6 @@ class EditProfileFragment : Fragment() {
         cancelBtn.setOnClickListener { findNavController().popBackStack() }
         saveBtn.setOnClickListener { handleSaveProfile() }
 
-        // Observe saving state
         editProfileViewModel.isSaving.observe(viewLifecycleOwner) { isSaving ->
             saveBtn.isEnabled = !isSaving
         }
@@ -124,13 +113,15 @@ class EditProfileFragment : Fragment() {
             saveBtn.text = progress ?: "Save Changes"
         }
 
-        // Observe save result
         editProfileViewModel.saveResult.observe(viewLifecycleOwner) { (success, updatedUser, message) ->
             if (success && updatedUser != null) {
-                // Push the updated user into MainViewModel — all fragments will update automatically
-                mainViewModel.updateUser(updatedUser)
+                // Notify MainActivity so bottom-nav taps use the fresh user
+                (activity as? MainActivity)?.onUserUpdated(updatedUser)
                 Toast.makeText(context, message ?: "Profile updated successfully!", Toast.LENGTH_SHORT).show()
-                findNavController().popBackStack()
+                // Navigate back to ProfileFragment with the updated user via SafeArgs
+                val action = EditProfileFragmentDirections
+                    .actionEditProfileFragmentToProfileFragment(user = updatedUser)
+                findNavController().navigate(action)
             } else {
                 Toast.makeText(context, message ?: "Failed to update profile", Toast.LENGTH_LONG).show()
             }
@@ -141,11 +132,8 @@ class EditProfileFragment : Fragment() {
         if (androidx.core.content.ContextCompat.checkSelfPermission(
                 requireContext(), android.Manifest.permission.CAMERA
             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        ) {
-            launchCamera()
-        } else {
-            requestPermissionLauncher.launch(android.Manifest.permission.CAMERA)
-        }
+        ) launchCamera()
+        else requestPermissionLauncher.launch(android.Manifest.permission.CAMERA)
     }
 
     private fun launchCamera() {
@@ -189,12 +177,9 @@ class EditProfileFragment : Fragment() {
     }
 
     private fun handleSaveProfile() {
+        val currentUser = args.user
         val newUsername = userNameInput.text.toString().trim()
         val newDiscordTag = discordTagInput.text.toString().trim()
-        val currentUser = mainViewModel.currentUser.value ?: run {
-            Toast.makeText(context, "Error: Could not get user information", Toast.LENGTH_SHORT).show()
-            return
-        }
 
         if (newUsername.isEmpty()) {
             Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
