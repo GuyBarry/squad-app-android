@@ -11,9 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.squadapp.entities.PostAdapter
 
 class HomeFragment : Fragment() {
-
     private val homeViewModel: HomeViewModel by viewModels()
-
     private var recyclerView: RecyclerView? = null
     private var loadingIndicator: View? = null
 
@@ -52,4 +50,3 @@ class HomeFragment : Fragment() {
         homeViewModel.loadPosts()
     }
 }
-

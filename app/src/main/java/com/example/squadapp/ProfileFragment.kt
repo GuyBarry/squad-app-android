@@ -9,9 +9,9 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -19,9 +19,8 @@ import com.example.squadapp.entities.PostAdapter
 import com.google.android.material.button.MaterialButton
 
 class ProfileFragment : Fragment() {
-
-    private val mainViewModel: MainViewModel by activityViewModels()
     private val profileViewModel: ProfileViewModel by viewModels()
+    private val args: ProfileFragmentArgs by navArgs()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,6 +32,8 @@ class ProfileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val user = args.user
 
         val profilePhoto = view.findViewById<ImageView>(R.id.profile_photo)
         val userName = view.findViewById<TextView>(R.id.user_name)
@@ -47,29 +48,22 @@ class ProfileFragment : Fragment() {
 
         userPostsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // Observe current user from shared MainViewModel
-        mainViewModel.currentUser.observe(viewLifecycleOwner) { user ->
-            Glide.with(this)
-                .load(user.profileImage)
-                .placeholder(R.drawable.user_profile_placeholder)
-                .error(R.drawable.user_profile_placeholder)
-                .circleCrop()
-                .into(profilePhoto)
+        Glide.with(this)
+            .load(user.profileImage)
+            .placeholder(R.drawable.user_profile_placeholder)
+            .error(R.drawable.user_profile_placeholder)
+            .circleCrop()
+            .into(profilePhoto)
+        userName.text = user.username
+        discordTag.text = user.discordTag
 
-            userName.text = user.username
-            discordTag.text = user.discordTag
+        profileViewModel.loadUserPosts(user.id)
 
-            // Load user posts whenever the user changes
-            profileViewModel.loadUserPosts(user.id)
-        }
-
-        // Observe loading state
         profileViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             loadingIndicator.visibility = if (isLoading) View.VISIBLE else View.GONE
             contentContainer.visibility = if (isLoading) View.GONE else View.VISIBLE
         }
 
-        // Observe user posts
         profileViewModel.userPosts.observe(viewLifecycleOwner) { posts ->
             postsCount.text = posts.size.toString()
             if (posts.isEmpty()) {
@@ -79,13 +73,11 @@ class ProfileFragment : Fragment() {
                 noPostsMessage.visibility = View.GONE
                 userPostsRecyclerView.visibility = View.VISIBLE
                 userPostsRecyclerView.adapter = PostAdapter(posts) { postToDelete ->
-                    val userId = mainViewModel.currentUser.value?.id ?: return@PostAdapter
-                    profileViewModel.deletePost(postToDelete.id, postToDelete.image, userId)
+                    profileViewModel.deletePost(postToDelete.id, postToDelete.image, user.id)
                 }
             }
         }
 
-        // Observe delete result
         profileViewModel.deleteResult.observe(viewLifecycleOwner) { (success, message) ->
             if (success) {
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
@@ -95,7 +87,8 @@ class ProfileFragment : Fragment() {
         }
 
         editProfileBtn.setOnClickListener {
-            findNavController().navigate(R.id.action_profileFragment_to_editProfileFragment)
+            val action = ProfileFragmentDirections.actionProfileFragmentToEditProfileFragment(user = user)
+            findNavController().navigate(action)
         }
 
         logoutBtn.setOnClickListener {
@@ -110,9 +103,6 @@ class ProfileFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // Refresh posts when returning from EditProfileFragment
-        mainViewModel.currentUser.value?.let { user ->
-            profileViewModel.loadUserPosts(user.id)
-        }
+        profileViewModel.loadUserPosts(args.user.id)
     }
 }
