@@ -9,16 +9,19 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
-import com.example.squadapp.entities.User
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.squadapp.entities.PostAdapter
-import com.example.squadapp.models.Model
 import com.google.android.material.button.MaterialButton
 
 class ProfileFragment : Fragment() {
+
+    private val mainViewModel: MainViewModel by activityViewModels()
+    private val profileViewModel: ProfileViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,7 +34,6 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Get views
         val profilePhoto = view.findViewById<ImageView>(R.id.profile_photo)
         val userName = view.findViewById<TextView>(R.id.user_name)
         val discordTag = view.findViewById<TextView>(R.id.discord_tag)
@@ -43,17 +45,61 @@ class ProfileFragment : Fragment() {
         val loadingIndicator = view.findViewById<View>(R.id.posts_loading_indicator)
         val contentContainer = view.findViewById<View>(R.id.posts_content_container)
 
-        loadUserProfile(profilePhoto, userName, discordTag, postsCount, userPostsRecyclerView,
-            noPostsMessage, loadingIndicator, contentContainer)
+        userPostsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // Set up edit profile button click listener
+        // Observe current user from shared MainViewModel
+        mainViewModel.currentUser.observe(viewLifecycleOwner) { user ->
+            Glide.with(this)
+                .load(user.profileImage)
+                .placeholder(R.drawable.user_profile_placeholder)
+                .error(R.drawable.user_profile_placeholder)
+                .circleCrop()
+                .into(profilePhoto)
+
+            userName.text = user.username
+            discordTag.text = user.discordTag
+
+            // Load user posts whenever the user changes
+            profileViewModel.loadUserPosts(user.id)
+        }
+
+        // Observe loading state
+        profileViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            loadingIndicator.visibility = if (isLoading) View.VISIBLE else View.GONE
+            contentContainer.visibility = if (isLoading) View.GONE else View.VISIBLE
+        }
+
+        // Observe user posts
+        profileViewModel.userPosts.observe(viewLifecycleOwner) { posts ->
+            postsCount.text = posts.size.toString()
+            if (posts.isEmpty()) {
+                noPostsMessage.visibility = View.VISIBLE
+                userPostsRecyclerView.visibility = View.GONE
+            } else {
+                noPostsMessage.visibility = View.GONE
+                userPostsRecyclerView.visibility = View.VISIBLE
+                userPostsRecyclerView.adapter = PostAdapter(posts) { postToDelete ->
+                    val userId = mainViewModel.currentUser.value?.id ?: return@PostAdapter
+                    profileViewModel.deletePost(postToDelete.id, postToDelete.image, userId)
+                }
+            }
+        }
+
+        // Observe delete result
+        profileViewModel.deleteResult.observe(viewLifecycleOwner) { (success, message) ->
+            if (success) {
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "Failed to delete post: $message", Toast.LENGTH_LONG).show()
+            }
+        }
+
         editProfileBtn.setOnClickListener {
             findNavController().navigate(R.id.action_profileFragment_to_editProfileFragment)
         }
 
-        // Set up logout button click listener
         logoutBtn.setOnClickListener {
-            Model.shared.signOut()
+            profileViewModel.signOut()
             val intent = Intent(requireContext(), AuthActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
@@ -64,123 +110,9 @@ class ProfileFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // Refresh user profile when returning from EditProfileFragment
-        val profilePhoto = view?.findViewById<ImageView>(R.id.profile_photo)
-        val userName = view?.findViewById<TextView>(R.id.user_name)
-        val discordTag = view?.findViewById<TextView>(R.id.discord_tag)
-        val postsCount = view?.findViewById<TextView>(R.id.posts_count)
-        val userPostsRecyclerView = view?.findViewById<RecyclerView>(R.id.user_posts_recycler_view)
-        val noPostsMessage = view?.findViewById<TextView>(R.id.no_posts_message)
-        val loadingIndicator = view?.findViewById<View>(R.id.posts_loading_indicator)
-        val contentContainer = view?.findViewById<View>(R.id.posts_content_container)
-
-        if (profilePhoto != null && userName != null && discordTag != null &&
-            postsCount != null && userPostsRecyclerView != null && noPostsMessage != null &&
-            loadingIndicator != null && contentContainer != null) {
-            loadUserProfile(profilePhoto, userName, discordTag, postsCount, userPostsRecyclerView,
-                noPostsMessage, loadingIndicator, contentContainer)
-        }
-    }
-
-    private fun loadUserProfile(
-        profilePhoto: ImageView,
-        userName: TextView,
-        discordTag: TextView,
-        postsCount: TextView,
-        userPostsRecyclerView: RecyclerView,
-        noPostsMessage: TextView,
-        loadingIndicator: View,
-        contentContainer: View
-    ) {
-        // Get current user from MainActivity safely
-        val mainActivity = activity as? MainActivity
-        if (mainActivity != null) {
-            val currentUser = mainActivity.currentUser
-
-            // Load user profile image using Glide
-            Glide.with(this)
-                .load(currentUser.profileImage)
-                .placeholder(R.drawable.user_profile_placeholder)
-                .error(R.drawable.user_profile_placeholder)
-                .circleCrop()
-                .into(profilePhoto)
-
-            userName.text = currentUser.username
-            discordTag.text = currentUser.discordTag
-
-            // Set up user posts RecyclerView
-            setupUserPosts(userPostsRecyclerView, currentUser, postsCount, noPostsMessage,
-                loadingIndicator, contentContainer)
-        }
-    }
-
-    private fun setupUserPosts(
-        recyclerView: RecyclerView,
-        currentUser: User,
-        postsCountTextView: TextView,
-        noPostsMessage: TextView,
-        loadingIndicator: View,
-        contentContainer: View
-    ) {
-        // Show loading state
-        loadingIndicator.visibility = View.VISIBLE
-        contentContainer.visibility = View.GONE
-
-        // Fetch all posts from Firebase
-        Model.shared.getPostsByUser(currentUser.id, { posts ->
-            // Hide loading, show content
-            loadingIndicator.visibility = View.GONE
-            contentContainer.visibility = View.VISIBLE
-
-            // Update posts count with actual number
-            postsCountTextView.text = posts.size.toString()
-
-            if (posts.isEmpty()) {
-                // No posts - show message, hide RecyclerView
-                noPostsMessage.visibility = View.VISIBLE
-                recyclerView.visibility = View.GONE
-            } else {
-                // Has posts - show RecyclerView, hide message
-                noPostsMessage.visibility = View.GONE
-                recyclerView.visibility = View.VISIBLE
-
-                // Set up RecyclerView
-                recyclerView.layoutManager = LinearLayoutManager(requireContext())
-
-                // Set adapter with delete callback
-                val adapter = PostAdapter(posts) { postToDelete ->
-                    // Show confirmation and delete post
-                    deletePost(postToDelete, recyclerView, currentUser, postsCountTextView,
-                        noPostsMessage, loadingIndicator, contentContainer)
-                }
-                recyclerView.adapter = adapter
-            }
-        })
-    }
-
-    private fun deletePost(
-        post: com.example.squadapp.entities.Post,
-        recyclerView: RecyclerView,
-        currentUser: User,
-        postsCountTextView: TextView,
-        noPostsMessage: TextView,
-        loadingIndicator: View,
-        contentContainer: View
-    ) {
-        Model.shared.deletePost(post.id, post.image) { success, message ->
-            if (success) {
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-                // Refresh the posts list
-                setupUserPosts(recyclerView, currentUser, postsCountTextView, noPostsMessage,
-                    loadingIndicator, contentContainer)
-            } else {
-                Toast.makeText(
-                    requireContext(),
-                    "Failed to delete post: $message",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+        // Refresh posts when returning from EditProfileFragment
+        mainViewModel.currentUser.value?.let { user ->
+            profileViewModel.loadUserPosts(user.id)
         }
     }
 }
-

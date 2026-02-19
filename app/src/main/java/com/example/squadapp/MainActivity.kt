@@ -2,6 +2,7 @@ package com.example.squadapp
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -12,8 +13,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
 
-    // Current user - accessible from fragments (no password)
-    lateinit var currentUser: User
+    val mainViewModel: MainViewModel by viewModels()
 
     private lateinit var navController: NavController
 
@@ -27,8 +27,9 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        // Get user object from Intent (single parcelable)
-        currentUser = intent.getParcelableExtra(User.EXTRA_USER, User::class.java)!!
+        // Get user object from Intent and push into the shared ViewModel
+        val user = intent.getParcelableExtra(User.EXTRA_USER, User::class.java)!!
+        mainViewModel.setUser(user)
 
         // Set up NavController from NavHostFragment
         val navHostFragment = supportFragmentManager

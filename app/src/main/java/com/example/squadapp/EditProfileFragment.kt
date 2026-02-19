@@ -13,14 +13,17 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
-import com.example.squadapp.entities.User
-import com.example.squadapp.models.Model
 import com.google.android.material.button.MaterialButton
 import java.util.Date
 
 class EditProfileFragment : Fragment() {
+
+    private val mainViewModel: MainViewModel by activityViewModels()
+    private val editProfileViewModel: EditProfileViewModel by viewModels()
 
     private lateinit var profilePhoto: ImageView
     private lateinit var galleryButton: com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -33,73 +36,54 @@ class EditProfileFragment : Fragment() {
     private lateinit var saveBtn: MaterialButton
 
     private var selectedImageUri: Uri? = null
-    private var originalImageUrl: String = ""  // Store the original profile image URL
-    private var isImageDeleted: Boolean = false  // Track if user wants to delete the image
+    private var originalImageUrl: String = ""
+    private var isImageDeleted: Boolean = false
 
-    // Activity result launcher for gallery
     private val galleryLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
             selectedImageUri = uri
-            // Load selected image as circle using Glide
-            Glide.with(this)
-                .load(uri)
+            isImageDeleted = false
+            Glide.with(this).load(uri)
                 .placeholder(R.drawable.user_profile_placeholder)
                 .error(R.drawable.user_profile_placeholder)
-                .circleCrop()
-                .into(profilePhoto)
-            // Show cancel button and hide gallery/camera buttons
+                .circleCrop().into(profilePhoto)
             cancelImageButton.visibility = View.VISIBLE
             galleryButton.visibility = View.GONE
             cameraButton.visibility = View.GONE
         }
     }
 
-    // Activity result launcher for camera
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            if (selectedImageUri != null) {
-                // Load captured image as circle using Glide
-                Glide.with(this)
-                    .load(selectedImageUri)
-                    .placeholder(R.drawable.user_profile_placeholder)
-                    .error(R.drawable.user_profile_placeholder)
-                    .circleCrop()
-                    .into(profilePhoto)
-                // Show cancel button and hide gallery/camera buttons
-                cancelImageButton.visibility = View.VISIBLE
-                galleryButton.visibility = View.GONE
-                cameraButton.visibility = View.GONE
-            }
+        if (result.resultCode == android.app.Activity.RESULT_OK && selectedImageUri != null) {
+            isImageDeleted = false
+            Glide.with(this).load(selectedImageUri)
+                .placeholder(R.drawable.user_profile_placeholder)
+                .error(R.drawable.user_profile_placeholder)
+                .circleCrop().into(profilePhoto)
+            cancelImageButton.visibility = View.VISIBLE
+            galleryButton.visibility = View.GONE
+            cameraButton.visibility = View.GONE
         }
     }
 
-    // Permission request launcher
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        if (isGranted) {
-            launchCamera()
-        } else {
-            Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_LONG).show()
-        }
+        if (isGranted) launchCamera()
+        else Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_LONG).show()
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_edit_profile, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize views
         profilePhoto = view.findViewById(R.id.edit_profile_photo)
         galleryButton = view.findViewById(R.id.gallery_button)
         cameraButton = view.findViewById(R.id.camera_button)
@@ -110,94 +94,68 @@ class EditProfileFragment : Fragment() {
         cancelBtn = view.findViewById(R.id.cancel_btn)
         saveBtn = view.findViewById(R.id.save_btn)
 
-        // Get current user from MainActivity safely
-        val mainActivity = activity as? MainActivity
-        if (mainActivity != null) {
-            val currentUser = mainActivity.currentUser
-
-            // Store original image URL
-            originalImageUrl = currentUser.profileImage
-
-            // Load existing user profile image using Glide
-            Glide.with(this)
-                .load(currentUser.profileImage)
+        // Populate fields from the shared MainViewModel
+        mainViewModel.currentUser.value?.let { user ->
+            originalImageUrl = user.profileImage
+            Glide.with(this).load(user.profileImage)
                 .placeholder(R.drawable.user_profile_placeholder)
                 .error(R.drawable.user_profile_placeholder)
-                .circleCrop()
-                .into(profilePhoto)
+                .circleCrop().into(profilePhoto)
+            userNameInput.setText(user.username)
+            discordTagInput.setText(user.discordTag)
+            if (user.profileImage.isNotEmpty()) deleteImageButton.visibility = View.VISIBLE
+        }
 
-            userNameInput.setText(currentUser.username)
-            discordTagInput.setText(currentUser.discordTag)
+        galleryButton.setOnClickListener { galleryLauncher.launch("image/*") }
+        cameraButton.setOnClickListener { openCamera() }
+        cancelImageButton.setOnClickListener { cancelImageChange() }
+        deleteImageButton.setOnClickListener { deleteImageChange() }
+        cancelBtn.setOnClickListener { findNavController().popBackStack() }
+        saveBtn.setOnClickListener { handleSaveProfile() }
 
-            // Show delete button if user has a profile image (not empty and not placeholder)
-            if (currentUser.profileImage.isNotEmpty()) {
-                deleteImageButton.visibility = View.VISIBLE
+        // Observe saving state
+        editProfileViewModel.isSaving.observe(viewLifecycleOwner) { isSaving ->
+            saveBtn.isEnabled = !isSaving
+        }
+
+        editProfileViewModel.saveProgress.observe(viewLifecycleOwner) { progress ->
+            saveBtn.text = progress ?: "Save Changes"
+        }
+
+        // Observe save result
+        editProfileViewModel.saveResult.observe(viewLifecycleOwner) { (success, updatedUser, message) ->
+            if (success && updatedUser != null) {
+                // Push the updated user into MainViewModel — all fragments will update automatically
+                mainViewModel.updateUser(updatedUser)
+                Toast.makeText(context, message ?: "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+                findNavController().popBackStack()
+            } else {
+                Toast.makeText(context, message ?: "Failed to update profile", Toast.LENGTH_LONG).show()
             }
-        }
-
-        // Set up click listeners
-        galleryButton.setOnClickListener {
-            // Open gallery to select image
-            galleryLauncher.launch("image/*")
-        }
-
-        cameraButton.setOnClickListener {
-            openCamera()
-        }
-
-        cancelImageButton.setOnClickListener {
-            cancelImageChange()
-        }
-
-        deleteImageButton.setOnClickListener {
-            deleteImageChange()
-        }
-
-        cancelBtn.setOnClickListener {
-            findNavController().popBackStack()
-        }
-
-        saveBtn.setOnClickListener {
-            handleSaveProfile()
         }
     }
 
     private fun openCamera() {
-        // Check if camera permission is granted
         if (androidx.core.content.ContextCompat.checkSelfPermission(
-                requireContext(),
-                android.Manifest.permission.CAMERA
+                requireContext(), android.Manifest.permission.CAMERA
             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
         ) {
             launchCamera()
         } else {
-            // Request permission
             requestPermissionLauncher.launch(android.Manifest.permission.CAMERA)
         }
     }
 
     private fun launchCamera() {
         try {
-            // Create a temporary file for the camera to save the image
             val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(Date())
             val storageDir = requireContext().getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
-            val photoFile = java.io.File.createTempFile(
-                "JPEG_${timeStamp}_",
-                ".jpg",
-                storageDir
-            )
-
+            val photoFile = java.io.File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
             selectedImageUri = androidx.core.content.FileProvider.getUriForFile(
-                requireContext(),
-                "${requireContext().packageName}.fileprovider",
-                photoFile
+                requireContext(), "${requireContext().packageName}.fileprovider", photoFile
             )
-
-            // Create camera intent
             val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, selectedImageUri)
-
-            Log.d("EditProfileFragment", "Launching camera with URI: $selectedImageUri")
             takePictureLauncher.launch(cameraIntent)
         } catch (ex: Exception) {
             Log.e("EditProfileFragment", "Error opening camera", ex)
@@ -206,172 +164,55 @@ class EditProfileFragment : Fragment() {
     }
 
     private fun cancelImageChange() {
-        // Clear the selected image
         selectedImageUri = null
         isImageDeleted = false
-
-        // Restore the original image
-        Glide.with(this)
-            .load(originalImageUrl)
+        Glide.with(this).load(originalImageUrl)
             .placeholder(R.drawable.user_profile_placeholder)
             .error(R.drawable.user_profile_placeholder)
-            .circleCrop()
-            .into(profilePhoto)
-
-        // Hide cancel button and show gallery/camera buttons again
+            .circleCrop().into(profilePhoto)
         cancelImageButton.visibility = View.GONE
         galleryButton.visibility = View.VISIBLE
         cameraButton.visibility = View.VISIBLE
-
-        // Show delete button if there's an original image
-        if (originalImageUrl.isNotEmpty()) {
-            deleteImageButton.visibility = View.VISIBLE
-        }
-
-        Log.d("EditProfileFragment", "Image change cancelled, restored original")
+        if (originalImageUrl.isNotEmpty()) deleteImageButton.visibility = View.VISIBLE
     }
 
     private fun deleteImageChange() {
-        // Mark image as deleted
         isImageDeleted = true
         selectedImageUri = null
-
-        // Load placeholder image directly (vector drawable works better with setImageResource)
         profilePhoto.setImageResource(R.drawable.user_profile_placeholder)
-
-        // Hide delete button and show cancel button
         deleteImageButton.visibility = View.GONE
         cancelImageButton.visibility = View.VISIBLE
         galleryButton.visibility = View.GONE
         cameraButton.visibility = View.GONE
-
-        Log.d("EditProfileFragment", "Image marked for deletion")
     }
 
     private fun handleSaveProfile() {
         val newUsername = userNameInput.text.toString().trim()
         val newDiscordTag = discordTagInput.text.toString().trim()
-
-        val mainActivity = activity as? MainActivity
-        if (mainActivity == null) {
+        val currentUser = mainViewModel.currentUser.value ?: run {
             Toast.makeText(context, "Error: Could not get user information", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val currentUser = mainActivity.currentUser
-
-        // Validation
         if (newUsername.isEmpty()) {
             Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
             return
         }
-
         if (newDiscordTag.isEmpty()) {
             Toast.makeText(context, "Discord tag cannot be empty", Toast.LENGTH_SHORT).show()
             return
         }
-
-        // Check if anything changed
         if (newUsername == currentUser.username &&
             newDiscordTag == currentUser.discordTag &&
-            selectedImageUri == null &&
-            !isImageDeleted) {
+            selectedImageUri == null && !isImageDeleted) {
             Toast.makeText(context, "No changes to save", Toast.LENGTH_SHORT).show()
             findNavController().popBackStack()
             return
         }
 
-        // Disable save button while saving
-        saveBtn.isEnabled = false
-        saveBtn.text = "Saving..."
-
-        // Handle image deletion
-        if (isImageDeleted && originalImageUrl.isNotEmpty()) {
-            Log.d("EditProfileFragment", "Deleting profile image from Firebase Storage...")
-            saveBtn.text = "Deleting image..."
-
-            Model.shared.deletePicture(originalImageUrl) { success, message ->
-                if (success) {
-                    Log.d("EditProfileFragment", "Image deleted successfully")
-
-                    // Update user profile with empty string for image URL
-                    saveBtn.text = "Updating profile..."
-                    updateUserProfile(currentUser, newUsername, newDiscordTag, "", mainActivity)
-                } else {
-                    // Image deletion failed
-                    saveBtn.isEnabled = true
-                    saveBtn.text = "Save Changes"
-
-                    Log.e("EditProfileFragment", "Failed to delete image: $message")
-                    Toast.makeText(context, "Failed to delete image: $message", Toast.LENGTH_LONG).show()
-                }
-            }
-            return
-        }
-
-        // If image is selected, upload it first
-        if (selectedImageUri != null) {
-            Log.d("EditProfileFragment", "Uploading profile image to Firebase Storage...")
-            saveBtn.text = "Uploading image..."
-
-            Model.shared.uploadProfilePicture(
-                selectedImageUri!!,
-                currentUser.id,
-                { success, downloadUrl, message ->
-                    if (success && downloadUrl != null) {
-                        Log.d("EditProfileFragment", "Image uploaded successfully: $downloadUrl")
-
-                        // Update user with the uploaded image URL
-                        saveBtn.text = "Updating profile..."
-                        updateUserProfile(currentUser, newUsername, newDiscordTag, downloadUrl, mainActivity)
-                    } else {
-                        // Image upload failed
-                        saveBtn.isEnabled = true
-                        saveBtn.text = "Save Changes"
-
-                        Log.e("EditProfileFragment", "Failed to upload image: $message")
-                        Toast.makeText(context, "Failed to upload image: $message", Toast.LENGTH_LONG).show()
-                    }
-                },
-                onProgress = { progress ->
-                    Log.d("EditProfileFragment", "Upload progress: $progress%")
-                    activity?.runOnUiThread {
-                        saveBtn.text = "Uploading... $progress%"
-                    }
-                }
-            )
-        } else {
-            // No image selected, just update user info
-            updateUserProfile(currentUser, newUsername, newDiscordTag, null, mainActivity)
-        }
-    }
-
-    private fun updateUserProfile(
-        currentUser: User,
-        username: String,
-        discordTag: String,
-        profileImageUrl: String?,
-        mainActivity: MainActivity
-    ) {
-        Model.shared.updateUser(currentUser, username, discordTag, profileImageUrl) { success, updatedUser, message ->
-            saveBtn.isEnabled = true
-            saveBtn.text = "Save Changes"
-
-            if (success && updatedUser != null) {
-                // Update MainActivity's current user
-                mainActivity.currentUser = updatedUser
-
-                Toast.makeText(context, message ?: "Profile updated successfully!", Toast.LENGTH_SHORT).show()
-
-                // Go back to profile
-                findNavController().popBackStack()
-            } else {
-                Toast.makeText(context, message ?: "Failed to update profile", Toast.LENGTH_LONG).show()
-            }
-        }
+        editProfileViewModel.saveProfile(
+            currentUser, newUsername, newDiscordTag,
+            selectedImageUri, isImageDeleted, originalImageUrl
+        )
     }
 }
-
-
-
-

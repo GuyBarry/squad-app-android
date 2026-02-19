@@ -1,7 +1,7 @@
 package com.example.squadapp
 
 import Game
-import GameListAdapter
+import com.example.squadapp.entities.GameListAdapter
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -14,18 +14,22 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.squadapp.entities.NewPost
+import com.example.squadapp.entities.RawgGame
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import android.widget.ImageView
 import android.widget.TextView
-import com.example.squadapp.models.Model
 import java.util.Date
 
 class PostFragment : Fragment(R.layout.fragment_post) {
+
+    private val mainViewModel: MainViewModel by activityViewModels()
+    private val postViewModel: PostViewModel by viewModels()
 
     private lateinit var imagePreview: ImageView
     private lateinit var imagePlaceholder: android.widget.LinearLayout
@@ -39,18 +43,13 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     private lateinit var publishBtn: MaterialButton
 
     private var selectedImageUri: Uri? = null
-    private var isPublishing = false
-    private var selectedGame: Game? = null
-    private val filteredGames = mutableListOf<Game>()
-    private var inputChangeCounter = 0
-
+    private val displayedGames = mutableListOf<Game>()
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val data = result.data
-            selectedImageUri = data?.data
+            selectedImageUri = result.data?.data
             if (selectedImageUri != null) {
                 imagePreview.setImageURI(selectedImageUri)
                 imagePreview.visibility = View.VISIBLE
@@ -65,7 +64,6 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             if (selectedImageUri != null) {
-                // Verify that the image file actually exists and has content
                 try {
                     val inputStream = requireContext().contentResolver.openInputStream(selectedImageUri!!)
                     if (inputStream != null && inputStream.available() > 0) {
@@ -74,11 +72,9 @@ class PostFragment : Fragment(R.layout.fragment_post) {
                         imagePreview.visibility = View.VISIBLE
                         imagePlaceholder.visibility = View.GONE
                         cancelImageButton.visibility = View.VISIBLE
-                        Log.d("PostFragment", "Camera image captured successfully")
                     } else {
                         inputStream?.close()
                         selectedImageUri = null
-                        Log.d("PostFragment", "Camera image file is empty, clearing URI")
                     }
                 } catch (e: Exception) {
                     Log.e("PostFragment", "Error reading camera image", e)
@@ -86,8 +82,6 @@ class PostFragment : Fragment(R.layout.fragment_post) {
                 }
             }
         } else {
-            // User cancelled the camera, clear the URI
-            Log.d("PostFragment", "Camera cancelled by user, clearing URI")
             selectedImageUri = null
         }
     }
@@ -95,11 +89,8 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        if (isGranted) {
-            launchCamera()
-        } else {
-            Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_LONG).show()
-        }
+        if (isGranted) launchCamera()
+        else Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_LONG).show()
     }
 
     override fun onCreateView(
@@ -113,7 +104,6 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize views
         imagePreview = view.findViewById(R.id.post_image_preview)
         imagePlaceholder = view.findViewById(R.id.image_placeholder)
         imageBoxContainer = view.findViewById(R.id.image_box_container)
@@ -124,39 +114,61 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         gamesListRecycler = view.findViewById(R.id.games_list_recycler)
         publishBtn = view.findViewById(R.id.publish_btn)
 
-        // Set up games list RecyclerView
         setupGamesList()
-
-        // Set up search input filtering with 2-keystroke delay
         setupSearchInput()
 
-        // Set up gallery button
-        galleryButton.setOnClickListener {
-            openGallery()
-        }
+        galleryButton.setOnClickListener { openGallery() }
+        cameraButton.setOnClickListener { openCamera() }
+        cancelImageButton.setOnClickListener { cancelImage() }
 
-        // Set up camera button
-        cameraButton.setOnClickListener {
-            openCamera()
-        }
-
-        // Set up cancel image button
-        cancelImageButton.setOnClickListener {
-            cancelImage()
-        }
-
-        // Set up publish button
         publishBtn.setOnClickListener {
-            if (!isPublishing) {
-                publishPost()
+            if (postViewModel.isPublishing.value != true) publishPost()
+        }
+
+        // Observe game search results
+        postViewModel.games.observe(viewLifecycleOwner) { rawgGames ->
+            val games = rawgGames.map { rawgGame ->
+                val platforms = rawgGame.platforms?.mapNotNull { it.platform?.name } ?: emptyList()
+                Game(
+                    name = rawgGame.name,
+                    platforms = platforms,
+                    imageResId = android.R.drawable.ic_menu_gallery,
+                    id = rawgGame.id,
+                    imageUrl = rawgGame.backgroundImage
+                )
+            }
+            val oldSize = displayedGames.size
+            displayedGames.clear()
+            if (oldSize > 0) gameListAdapter.notifyItemRangeRemoved(0, oldSize)
+            displayedGames.addAll(games)
+            if (games.isNotEmpty()) gameListAdapter.notifyItemRangeInserted(0, games.size)
+        }
+
+        // Observe publishing state
+        postViewModel.isPublishing.observe(viewLifecycleOwner) { isPublishing ->
+            publishBtn.isEnabled = !isPublishing
+        }
+
+        postViewModel.publishProgress.observe(viewLifecycleOwner) { progress ->
+            publishBtn.text = progress ?: getString(R.string.publish_post)
+        }
+
+        // Observe publish result
+        postViewModel.publishResult.observe(viewLifecycleOwner) { (success, message) ->
+            if (success) {
+                Toast.makeText(context, "Post published successfully!", Toast.LENGTH_SHORT).show()
+                resetForm()
+                navigateToHome()
+            } else {
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
             }
         }
     }
 
     private fun setupGamesList() {
-        gameListAdapter = GameListAdapter(filteredGames) { game ->
-            selectedGame = game
-            inputChangeCounter = 0 // Reset counter when selecting a game
+        gameListAdapter = GameListAdapter(displayedGames) { game ->
+            postViewModel.selectedGame = game.toRawgGame()
+            postViewModel.inputChangeCounter = 0
             gameSearchInput.setText(game.name, TextView.BufferType.EDITABLE)
         }
         gamesListRecycler.layoutManager = LinearLayoutManager(context)
@@ -168,67 +180,34 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                inputChangeCounter++
+                postViewModel.inputChangeCounter++
+                val selectedGame = postViewModel.selectedGame
 
-                // Check if input matches selected game name - if so, show only the selected game
-                if (s != null && selectedGame != null && s.toString() == selectedGame?.name) {
-                    val oldSize = filteredGames.size
-                    filteredGames.clear()
-                    if (oldSize > 0) {
-                        gameListAdapter.notifyItemRangeRemoved(0, oldSize)
-                    }
-                    filteredGames.add(selectedGame!!)
+                if (s != null && selectedGame != null && s.toString() == selectedGame.name) {
+                    val oldSize = displayedGames.size
+                    displayedGames.clear()
+                    if (oldSize > 0) gameListAdapter.notifyItemRangeRemoved(0, oldSize)
+                    displayedGames.add(Game(
+                        name = selectedGame.name,
+                        platforms = selectedGame.platforms?.mapNotNull { it.platform?.name } ?: emptyList(),
+                        imageResId = android.R.drawable.ic_menu_gallery,
+                        id = selectedGame.id,
+                        imageUrl = selectedGame.backgroundImage
+                    ))
                     gameListAdapter.notifyItemInserted(0)
                     return
                 }
 
-                // After 2 keystrokes, filter the games
-                if (s != null && s.length >= 2 && inputChangeCounter >= 2) {
-                    filterGames(s.toString())
+                if (s != null && s.length >= 2 && postViewModel.inputChangeCounter >= 2) {
+                    postViewModel.searchGames(s.toString())
                 } else if (s != null && s.isEmpty()) {
-                    // Clear the list if input is empty
-                    val size = filteredGames.size
-                    filteredGames.clear()
-                    if (size > 0) {
-                        gameListAdapter.notifyItemRangeRemoved(0, size)
-                    }
-                    selectedGame = null
+                    postViewModel.clearGames()
+                    postViewModel.selectedGame = null
                 }
             }
 
             override fun afterTextChanged(s: Editable?) {}
         })
-    }
-
-    private fun filterGames(query: String) {
-        Model.shared.searchGames(query) { rawgGames ->
-            // Parse RawgGame objects to Game objects
-            val games = rawgGames.map { rawgGame ->
-                val platforms = rawgGame.platforms?.mapNotNull { it.platform?.name } ?: emptyList()
-                Game(
-                    name = rawgGame.name,
-                    platforms = platforms,
-                    imageResId = android.R.drawable.ic_menu_gallery,
-                    id = rawgGame.id,
-                    imageUrl = rawgGame.backgroundImage
-                )
-            }.take(4) // Limit to 4 results
-
-            // Update the adapter on the main thread
-            activity?.runOnUiThread {
-                val oldSize = filteredGames.size
-                filteredGames.clear()
-                if (oldSize > 0) {
-                    gameListAdapter.notifyItemRangeRemoved(0, oldSize)
-                }
-                filteredGames.addAll(games)
-                if (games.isNotEmpty()) {
-                    gameListAdapter.notifyItemRangeInserted(0, games.size)
-                }
-            }
-
-            Log.d("PostFragment", "Found ${games.size} games for query: $query")
-        }
     }
 
     private fun openGallery() {
@@ -237,41 +216,26 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     }
 
     private fun openCamera() {
-        // Check if camera permission is granted
         if (androidx.core.content.ContextCompat.checkSelfPermission(
-                requireContext(),
-                android.Manifest.permission.CAMERA
+                requireContext(), android.Manifest.permission.CAMERA
             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
         ) {
             launchCamera()
         } else {
-            // Request permission
             requestPermissionLauncher.launch(android.Manifest.permission.CAMERA)
         }
     }
 
     private fun launchCamera() {
         try {
-            // Create a temporary file for the camera to save the image
             val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(Date())
             val storageDir = requireContext().getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
-            val photoFile = java.io.File.createTempFile(
-                "JPEG_${timeStamp}_",
-                ".jpg",
-                storageDir
-            )
-
+            val photoFile = java.io.File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
             selectedImageUri = androidx.core.content.FileProvider.getUriForFile(
-                requireContext(),
-                "${requireContext().packageName}.fileprovider",
-                photoFile
+                requireContext(), "${requireContext().packageName}.fileprovider", photoFile
             )
-
-            // Create camera intent
             val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, selectedImageUri)
-
-            Log.d("PostFragment", "Launching camera with URI: $selectedImageUri")
             takePictureLauncher.launch(cameraIntent)
         } catch (ex: Exception) {
             Log.e("PostFragment", "Error opening camera", ex)
@@ -280,16 +244,11 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     }
 
     private fun cancelImage() {
-        // Clear the selected image
         selectedImageUri = null
         imagePreview.setImageURI(null)
-
-        // Hide preview and cancel button, show placeholder
         imagePreview.visibility = View.GONE
         cancelImageButton.visibility = View.GONE
         imagePlaceholder.visibility = View.VISIBLE
-
-        Log.d("PostFragment", "Image cancelled and removed")
     }
 
     private fun publishPost() {
@@ -300,99 +259,27 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             Toast.makeText(context, "Please select or take an image", Toast.LENGTH_LONG).show()
             return
         }
-
-        if (selectedGame == null) {
+        if (postViewModel.selectedGame == null) {
             Toast.makeText(context, "Please select a game from the list", Toast.LENGTH_SHORT).show()
             return
         }
-
         if (description.isEmpty()) {
             Toast.makeText(context, "Please add a description", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Get current user from MainActivity
-        val mainActivity = activity as? MainActivity
-        if (mainActivity == null) {
+        val userId = mainViewModel.currentUser.value?.id
+        if (userId == null) {
             Toast.makeText(context, "Error: Could not get user information", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val currentUser = mainActivity.currentUser
-
-        // Disable publish button and show loading state
-        isPublishing = true
-        publishBtn.isEnabled = false
-        publishBtn.text = getString(R.string.publishing)
-
-        // Generate a temporary post ID for the image filename
-        val tempPostId = "${currentUser.id}_${System.currentTimeMillis()}"
-
-        // Step 1: Upload image to Firebase Storage
-        Log.d("PostFragment", "Uploading image to Firebase Storage...")
-        Model.shared.uploadPostPicture(
-            selectedImageUri!!,
-            tempPostId,
-            { success, downloadUrl, message ->
-                if (success && downloadUrl != null) {
-                    Log.d("PostFragment", "Image uploaded successfully: $downloadUrl")
-
-                    // Step 2: Create NewPost object with the uploaded image URL
-                    val newPost = NewPost(
-                        image = downloadUrl, // Use the download URL from Firebase Storage
-                        userId = currentUser.id,
-                        description = description,
-                        creationTime = Date(System.currentTimeMillis()),
-                        gameId = selectedGame!!.id
-                    )
-
-                    // Step 3: Publish post to Firestore
-                    Log.d("PostFragment", "Creating post in Firestore...")
-                    Model.shared.addPost(newPost) { postSuccess, postMessage ->
-                        isPublishing = false
-                        publishBtn.isEnabled = true
-                        publishBtn.text = getString(R.string.publish_post)
-
-                        if (postSuccess) {
-                            Log.d("PostFragment", "Post published successfully")
-                            Toast.makeText(context, "Post published successfully!", Toast.LENGTH_SHORT).show()
-
-                            // Reset form and navigate back to home
-                            resetForm()
-                            navigateToHome()
-                        } else {
-                            Log.e("PostFragment", "Failed to publish post: $postMessage")
-                            Toast.makeText(context, "Failed to create post: $postMessage", Toast.LENGTH_LONG).show()
-                            // Form is NOT reset, user can try again
-                        }
-                    }
-                } else {
-                    // Image upload failed
-                    isPublishing = false
-                    publishBtn.isEnabled = true
-                    publishBtn.text = getString(R.string.publish_post)
-
-                    Log.e("PostFragment", "Failed to upload image: $message")
-                    Toast.makeText(context, "Failed to upload image: $message", Toast.LENGTH_LONG).show()
-                }
-            },
-            onProgress = { progress ->
-                Log.d("PostFragment", "Upload progress: $progress%")
-                // Optionally update UI with progress
-                activity?.runOnUiThread {
-                    publishBtn.text = "Uploading... $progress%"
-                }
-            }
-        )
+        postViewModel.publishPost(selectedImageUri!!, userId, description)
     }
 
     private fun navigateToHome() {
-        // Navigate back to HomeFragment using Navigation component
         findNavController().navigate(R.id.homeFragment)
-
-        // Update bottom navigation to highlight Home
-        val mainActivity = activity as? MainActivity
-        val bottomNavigation = mainActivity?.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottom_navigation)
+        val bottomNavigation = activity?.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigation?.selectedItemId = R.id.nav_home
     }
 
@@ -403,13 +290,30 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         cancelImageButton.visibility = View.GONE
         imagePlaceholder.visibility = View.VISIBLE
         gameSearchInput.text?.clear()
-        val size = filteredGames.size
-        filteredGames.clear()
-        if (size > 0) {
-            gameListAdapter.notifyItemRangeRemoved(0, size)
-        }
-        selectedGame = null
-        val descriptionText: TextInputEditText = view?.findViewById(R.id.description_text) ?: return
-        descriptionText.text?.clear()
+        val size = displayedGames.size
+        displayedGames.clear()
+        if (size > 0) gameListAdapter.notifyItemRangeRemoved(0, size)
+        postViewModel.selectedGame = null
+        view?.findViewById<TextInputEditText>(R.id.description_text)?.text?.clear()
     }
+
+    // Helper to convert a Game (UI model) back to RawgGame for the ViewModel
+    private fun Game.toRawgGame(): RawgGame = RawgGame(
+        id = this.id,
+        name = this.name,
+        slug = "",
+        released = null,
+        backgroundImage = this.imageUrl,
+        rating = null,
+        ratingsCount = null,
+        metacritic = null,
+        platforms = this.platforms.map { platformName ->
+            com.example.squadapp.entities.PlatformInfo(
+                com.example.squadapp.entities.Platform(0, platformName, "")
+            )
+        },
+        genres = null,
+        description = null,
+        shortScreenshots = null
+    )
 }
