@@ -2,7 +2,9 @@ package com.example.squadapp
 
 import Game
 import com.example.squadapp.entities.GameListAdapter
+import android.content.Context
 import android.content.Intent
+import android.view.inputmethod.InputMethodManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -153,6 +155,12 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             galleryButton.isEnabled = !isPublishing
             cameraButton.isEnabled = !isPublishing
             cancelImageButton.isEnabled = !isPublishing
+            if (isPublishing) {
+                descriptionInput.clearFocus()
+                gameSearchInput.clearFocus()
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(view.windowToken, 0)
+            }
         }
 
         postViewModel.publishProgress.observe(viewLifecycleOwner) { progress ->

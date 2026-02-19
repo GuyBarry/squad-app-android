@@ -1,6 +1,8 @@
 package com.example.squadapp
 
+import android.content.Context
 import android.content.Intent
+import android.view.inputmethod.InputMethodManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -114,6 +116,12 @@ class EditProfileFragment : Fragment() {
             cameraButton.isEnabled = !isSaving
             cancelImageButton.isEnabled = !isSaving
             deleteImageButton.isEnabled = !isSaving
+            if (isSaving) {
+                userNameInput.clearFocus()
+                discordTagInput.clearFocus()
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(view.windowToken, 0)
+            }
         }
 
         editProfileViewModel.saveProgress.observe(viewLifecycleOwner) { progress ->

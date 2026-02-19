@@ -1,6 +1,8 @@
 package com.example.squadapp
 
+import android.content.Context
 import android.os.Bundle
+import android.view.inputmethod.InputMethodManager
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.TextPaint
@@ -59,6 +61,15 @@ class SignUpFragment : Fragment() {
             discordTagEditText.isEnabled = !isLoading
             passwordEditText.isEnabled = !isLoading
             confirmPasswordEditText.isEnabled = !isLoading
+            if (isLoading) {
+                usernameEditText.clearFocus()
+                emailEditText.clearFocus()
+                discordTagEditText.clearFocus()
+                passwordEditText.clearFocus()
+                confirmPasswordEditText.clearFocus()
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(view.windowToken, 0)
+            }
         }
 
         signUpViewModel.signUpResult.observe(viewLifecycleOwner) { (success, message) ->
