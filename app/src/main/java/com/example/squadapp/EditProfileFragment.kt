@@ -117,8 +117,7 @@ class EditProfileFragment : Fragment() {
             cancelImageButton.isEnabled = !isSaving
             deleteImageButton.isEnabled = !isSaving
             if (isSaving) {
-                userNameInput.clearFocus()
-                discordTagInput.clearFocus()
+                view.clearFocus()
                 val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
             }

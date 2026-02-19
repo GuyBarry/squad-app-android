@@ -62,11 +62,7 @@ class SignUpFragment : Fragment() {
             passwordEditText.isEnabled = !isLoading
             confirmPasswordEditText.isEnabled = !isLoading
             if (isLoading) {
-                usernameEditText.clearFocus()
-                emailEditText.clearFocus()
-                discordTagEditText.clearFocus()
-                passwordEditText.clearFocus()
-                confirmPasswordEditText.clearFocus()
+                view.clearFocus()
                 val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
             }

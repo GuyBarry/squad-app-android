@@ -156,8 +156,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             cameraButton.isEnabled = !isPublishing
             cancelImageButton.isEnabled = !isPublishing
             if (isPublishing) {
-                descriptionInput.clearFocus()
-                gameSearchInput.clearFocus()
+                view.clearFocus()
                 val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
             }

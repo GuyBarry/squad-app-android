@@ -52,8 +52,7 @@ class SignInFragment : Fragment() {
             emailEditText.isEnabled = !isLoading
             passwordEditText.isEnabled = !isLoading
             if (isLoading) {
-                emailEditText.clearFocus()
-                passwordEditText.clearFocus()
+                view.clearFocus()
                 val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.hideSoftInputFromWindow(view.windowToken, 0)
             }
