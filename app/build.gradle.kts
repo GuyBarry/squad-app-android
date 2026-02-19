@@ -87,4 +87,8 @@ dependencies {
     // Glide for image loading
     implementation(libs.glide)
     kapt(libs.glide.compiler)
+
+    // Navigation component
+    implementation(libs.navigation.fragment.ktx)
+    implementation(libs.navigation.ui.ktx)
 }

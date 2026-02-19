@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.squadapp.entities.NewPost
@@ -386,11 +387,8 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     }
 
     private fun navigateToHome() {
-        // Navigate back to HomeFragment
-        parentFragmentManager.beginTransaction().apply {
-            replace(R.id.fragment_container, HomeFragment())
-            commit()
-        }
+        // Navigate back to HomeFragment using Navigation component
+        findNavController().navigate(R.id.homeFragment)
 
         // Update bottom navigation to highlight Home
         val mainActivity = activity as? MainActivity
