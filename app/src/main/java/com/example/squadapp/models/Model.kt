@@ -41,7 +41,11 @@ class Model private constructor() {
         rawgApiClient.searchGameById(gameId, completion)
     }
 
-    fun deletePost(postId: String, completion: ResultCompletion) {
+    fun deletePost(postId: String, imageUrl: String, completion: ResultCompletion) {
+        if (imageUrl.isNotEmpty()) {
+            firebaseStorageModel.deletePicture(imageUrl) { success, _ -> }
+        }
+
         firebaseModel.deletePost(postId, completion)
     }
 
@@ -53,7 +57,13 @@ class Model private constructor() {
         firebaseModel.signInUser(username, password, completion)
     }
 
-    fun updateUser(userId: String, username: String, discordTag: String, profileImageUrl: String? = null, completion: AuthCompletion) {
+    fun updateUser(
+        userId: String,
+        username: String,
+        discordTag: String,
+        profileImageUrl: String? = null,
+        completion: AuthCompletion
+    ) {
         firebaseModel.updateUser(userId, username, discordTag, profileImageUrl, completion)
     }
 
