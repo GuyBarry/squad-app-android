@@ -10,11 +10,13 @@ import com.example.squadapp.base.ResultCompletion
 import com.example.squadapp.base.UploadPictureCompletion
 import com.example.squadapp.entities.NewPost
 import com.example.squadapp.entities.NewUser
+import com.example.squadapp.entities.User
 
 class Model private constructor() {
 
     private val rawgApiClient = RawgApiClient()
     private val firebaseModel = FirebaseModel()
+    private val firebaseAuthModel = FirebaseAuthModel()
     private val firebaseStorageModel = FirebaseStorageModel()
 
     companion object {
@@ -22,7 +24,7 @@ class Model private constructor() {
     }
 
     fun getCurrentUser(completion: AuthCompletion) {
-        firebaseModel.getCurrentUser(completion)
+        firebaseAuthModel.getCurrentUser(completion)
     }
 
     fun getAllPosts(completion: PostsCompletion) {
@@ -54,23 +56,26 @@ class Model private constructor() {
     }
 
     fun signUpUser(password: String, newUser: NewUser, completion: AuthCompletion) {
-        firebaseModel.signUpUser(password, newUser, completion)
+        firebaseAuthModel.signUpUser(password, newUser, completion)
     }
 
     fun signInUser(email: String, password: String, completion: AuthCompletion) {
-        firebaseModel.signInUser(email, password, completion)
+        firebaseAuthModel.signInUser(email, password, completion)
     }
 
     fun updateUser(
-        userId: String,
+        currentUser: User,
         username: String,
         discordTag: String,
         profileImageUrl: String? = null,
         completion: AuthCompletion
     ) {
-        firebaseModel.updateUser(userId, username, discordTag, profileImageUrl, completion)
+        firebaseAuthModel.updateUser(currentUser, username, discordTag, profileImageUrl, completion)
     }
 
+    fun signOut() {
+        firebaseAuthModel.signOut()
+    }
 
     fun uploadProfilePicture(
         imageUri: Uri,
