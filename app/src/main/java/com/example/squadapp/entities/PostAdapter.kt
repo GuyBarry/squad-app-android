@@ -7,10 +7,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import com.example.squadapp.R
 import com.example.squadapp.models.Model
 import com.example.squadapp.utils.TimeUtils
@@ -24,6 +29,7 @@ class PostAdapter(
 
     class PostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val postImage: ImageView = itemView.findViewById(R.id.post_image)
+        val postImageLoader: ProgressBar = itemView.findViewById(R.id.post_image_loader)
         val userProfileImage: ImageView = itemView.findViewById(R.id.user_profile_image)
         val userName: TextView = itemView.findViewById(R.id.user_name_text)
         val discordTag: TextView = itemView.findViewById(R.id.discord_tag_text)
@@ -37,10 +43,33 @@ class PostAdapter(
 
         fun bind(post: Post, onDeletePost: ((Post) -> Unit)?) {
             // Load post image from URL using Glide
+            postImageLoader.visibility = View.VISIBLE
             Glide.with(itemView.context)
                 .load(post.image)
                 .placeholder(R.drawable.post_image_placeholder_2)
                 .error(R.drawable.post_image_placeholder_2)
+                .listener(object : RequestListener<android.graphics.drawable.Drawable> {
+                    override fun onLoadFailed(
+                        e: GlideException?,
+                        model: Any?,
+                        target: Target<android.graphics.drawable.Drawable>,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        postImageLoader.visibility = View.GONE
+                        return false
+                    }
+
+                    override fun onResourceReady(
+                        resource: android.graphics.drawable.Drawable,
+                        model: Any,
+                        target: Target<android.graphics.drawable.Drawable>?,
+                        dataSource: DataSource,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        postImageLoader.visibility = View.GONE
+                        return false
+                    }
+                })
                 .into(postImage)
 
             // Load user profile image from URL using Glide
