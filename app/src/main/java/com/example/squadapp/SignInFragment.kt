@@ -1,14 +1,6 @@
 package com.example.squadapp
 
-import android.content.Context
 import android.os.Bundle
-import android.view.inputmethod.InputMethodManager
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.TextPaint
-import android.text.method.LinkMovementMethod
-import android.text.style.ClickableSpan
-import android.text.style.UnderlineSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.example.squadapp.utils.SpannableUtils
 
 class SignInFragment : Fragment() {
 
@@ -37,23 +30,40 @@ class SignInFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        bindViews(view)
+        setupSignUpLink()
+        setupButtonListeners()
+        observeViewModel(view)
+    }
+
+    // ── View binding ──────────────────────────────────────────────────────────
+
+    private fun bindViews(view: View) {
         emailEditText = view.findViewById(R.id.signin_email)
         passwordEditText = view.findViewById(R.id.signin_password)
         signInButton = view.findViewById(R.id.signin_button)
         signUpLink = view.findViewById(R.id.signin_signup_link)
+    }
 
-        setupSignUpLink()
-
+    private fun setupButtonListeners() {
         signInButton.setOnClickListener { handleSignIn() }
+    }
 
+    private fun setupSignUpLink() {
+        SpannableUtils.setClickableLink(
+            textView = signUpLink,
+            fullText = "Don't have an account? Sign up here",
+            clickableSubstring = "Sign up here",
+            onClick = { findNavController().navigate(R.id.action_signInFragment_to_signUpFragment) }
+        )
+    }
+
+    // ── ViewModel observers ───────────────────────────────────────────────────
+
+    private fun observeViewModel(view: View) {
         signInViewModel.isSigningIn.observe(viewLifecycleOwner) { isLoading ->
-            signInButton.isEnabled = !isLoading
+            setFormEnabled(!isLoading, view)
             signInButton.text = if (isLoading) getString(R.string.signing_in) else getString(R.string.sign_in)
-            emailEditText.isEnabled = !isLoading
-            passwordEditText.isEnabled = !isLoading
-            if (isLoading) {
-                view.clearFocus()
-            }
         }
 
         signInViewModel.signInResult.observe(viewLifecycleOwner) { (success, message) ->
@@ -65,44 +75,37 @@ class SignInFragment : Fragment() {
         }
     }
 
+    // ── Form state helpers ────────────────────────────────────────────────────
+
+    private fun setFormEnabled(enabled: Boolean, rootView: View) {
+        signInButton.isEnabled = enabled
+        emailEditText.isEnabled = enabled
+        passwordEditText.isEnabled = enabled
+        if (!enabled) rootView.clearFocus()
+    }
+
+    // ── Sign in ───────────────────────────────────────────────────────────────
+
     private fun handleSignIn() {
         val email = emailEditText.text.toString().trim()
         val password = passwordEditText.text.toString().trim()
 
-        if (email.isEmpty()) {
-            Toast.makeText(context, "Email cannot be empty", Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (password.isEmpty()) {
-            Toast.makeText(context, "Password cannot be empty", Toast.LENGTH_SHORT).show()
-            return
-        }
+        if (!validateSignInFields(email, password)) return
 
         signInViewModel.signIn(email, password) { user ->
             authViewModel.onAuthSuccess(user)
         }
     }
 
-    private fun setupSignUpLink() {
-        val fullText = "Don't have an account? Sign up here"
-        val spannableString = SpannableString(fullText)
-
-        val clickableSpan = object : ClickableSpan() {
-            override fun onClick(widget: View) {
-                findNavController().navigate(R.id.action_signInFragment_to_signUpFragment)
-            }
-            override fun updateDrawState(ds: TextPaint) {
-                super.updateDrawState(ds)
-                ds.isUnderlineText = false
-            }
+    private fun validateSignInFields(email: String, password: String): Boolean {
+        if (email.isEmpty()) {
+            Toast.makeText(context, "Email cannot be empty", Toast.LENGTH_SHORT).show()
+            return false
         }
-
-        val startIndex = fullText.indexOf("Sign up here")
-        val endIndex = startIndex + "Sign up here".length
-        spannableString.setSpan(clickableSpan, startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableString.setSpan(UnderlineSpan(), startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-        signUpLink.text = spannableString
-        signUpLink.movementMethod = LinkMovementMethod.getInstance()
+        if (password.isEmpty()) {
+            Toast.makeText(context, "Password cannot be empty", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        return true
     }
 }
