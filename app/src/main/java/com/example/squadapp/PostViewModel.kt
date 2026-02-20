@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.squadapp.entities.NewPost
 import com.example.squadapp.entities.RawgGame
+import com.example.squadapp.entities.User
 import com.example.squadapp.models.Model
 import java.util.Date
 
@@ -39,14 +40,14 @@ class PostViewModel : ViewModel() {
 
     fun publishPost(
         imageUri: Uri,
-        userId: String,
+        user: User,
         description: String
     ) {
         val game = selectedGame ?: return
         _isPublishing.value = true
         _publishProgress.value = null
 
-        val tempPostId = "${userId}_${System.currentTimeMillis()}"
+        val tempPostId = "${user.id}_${System.currentTimeMillis()}"
 
         Model.shared.uploadPostPicture(
             imageUri,
@@ -55,7 +56,7 @@ class PostViewModel : ViewModel() {
                 if (success && downloadUrl != null) {
                     val newPost = NewPost(
                         image = downloadUrl,
-                        userId = userId,
+                        userId = user.id,
                         description = description,
                         creationTime = Date(System.currentTimeMillis()),
                         gameId = game.id

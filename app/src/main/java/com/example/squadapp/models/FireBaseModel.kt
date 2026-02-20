@@ -203,16 +203,17 @@ class FirebaseModel {
         }
     }
 
-    fun addPost(newPost: NewPost, completion: ResultCompletion) {
+    fun addPost(newPost: NewPost, completion: (Boolean, String, String?) -> Unit) {
+        val docRef = db.collection(POSTS).document()
         val postData = NewPost.serialize(newPost)
 
-        db.collection(POSTS).add(postData)
+        docRef.set(postData)
             .addOnSuccessListener {
-                completion(true, "Post published successfully!")
+                completion(true, "Post published successfully!", docRef.id)
             }
             .addOnFailureListener { exception ->
                 Log.e("FirebaseModel", "Error adding post: ${exception.message}")
-                completion(false, "Failed to publish post: ${exception.message}")
+                completion(false, "Failed to publish post: ${exception.message}", null)
             }
     }
 

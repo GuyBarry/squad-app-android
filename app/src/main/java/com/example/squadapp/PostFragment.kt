@@ -280,7 +280,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             return
         }
 
-        postViewModel.publishPost(selectedImageUri!!, args.user.id, description)
+        postViewModel.publishPost(selectedImageUri!!, args.user, description)
     }
 
     private fun navigateToHome() {

@@ -11,6 +11,9 @@ import com.example.squadapp.base.UploadPictureCompletion
 import com.example.squadapp.entities.NewPost
 import com.example.squadapp.entities.NewUser
 import com.example.squadapp.entities.User
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class Model private constructor() {
 
@@ -18,6 +21,7 @@ class Model private constructor() {
     private val firebaseModel = FirebaseModel()
     private val firebaseAuthModel = FirebaseAuthModel()
     private val firebaseStorageModel = FirebaseStorageModel()
+    private val roomLocalModel = RoomLocalModel()
 
     companion object {
         val shared = Model()
@@ -28,15 +32,45 @@ class Model private constructor() {
     }
 
     fun getAllPosts(completion: PostsCompletion) {
-        firebaseModel.getAllPosts(completion)
+        CoroutineScope(Dispatchers.IO).launch {
+            val cachedPosts = roomLocalModel.getAllPosts()
+            CoroutineScope(Dispatchers.Main).launch {
+                completion(cachedPosts)
+            }
+        }
+    }
+
+    fun refreshPosts(completion: PostsCompletion) {
+        // Skip cache – go straight to Firestore and replace the local cache
+        firebaseModel.getAllPosts { posts ->
+            CoroutineScope(Dispatchers.IO).launch {
+                roomLocalModel.clearAllPosts()
+                roomLocalModel.savePosts(posts)
+                CoroutineScope(Dispatchers.Main).launch {
+                    completion(posts)
+                }
+            }
+        }
     }
 
     fun getPostsByUser(userId: String, completion: PostsCompletion) {
-        firebaseModel.getPostsByUser(userId, completion)
+        CoroutineScope(Dispatchers.IO).launch {
+            val cachedPosts = roomLocalModel.getPostsByUser(userId)
+            CoroutineScope(Dispatchers.Main).launch {
+                completion(cachedPosts)
+            }
+        }
     }
 
-    fun addPost(newPost: NewPost, completion: ResultCompletion) {
-        firebaseModel.addPost(newPost, completion)
+    fun addPost(newPost: NewPost,completion: ResultCompletion) {
+        firebaseModel.addPost(newPost) { success, message, postId ->
+            if (success && postId != null) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    roomLocalModel.savePost(newPost, postId)
+                }
+            }
+            completion(success, message)
+        }
     }
 
     fun searchGames(gameName: String, completion: RawgGamesCompletion) {
@@ -48,23 +82,55 @@ class Model private constructor() {
     }
 
     fun deletePost(postId: String, imageUrl: String, completion: ResultCompletion) {
-        if (imageUrl.isNotEmpty()) {
-            firebaseStorageModel.deletePicture(imageUrl) { _, _ -> }
-        }
+        firebaseModel.deletePost(postId) { success, message ->
+            if (success) {
+                if (imageUrl.isNotEmpty()) {
+                    firebaseStorageModel.deletePicture(imageUrl) { _, _ -> }
+                }
 
-        firebaseModel.deletePost(postId, completion)
+                // Also delete from local Room cache
+                CoroutineScope(Dispatchers.IO).launch {
+                    roomLocalModel.deletePost(postId)
+                }
+            }
+            completion(success, message)
+        }
     }
 
     fun updatePost(postId: String, updates: Map<String, Any?>, completion: ResultCompletion) {
-        firebaseModel.updatePost(postId, updates, completion)
+        firebaseModel.updatePost(postId, updates) { success, message ->
+            if (success) {
+                // Also update the local Room cache
+                CoroutineScope(Dispatchers.IO).launch {
+                    roomLocalModel.updatePost(postId, updates)
+                }
+            }
+            completion(success, message)
+        }
     }
 
     fun signUpUser(password: String, newUser: NewUser, completion: AuthCompletion) {
-        firebaseAuthModel.signUpUser(password, newUser, completion)
+        firebaseAuthModel.signUpUser(password, newUser) { success, user, message ->
+            if (success && user != null) {
+                // Save new user to Room cache
+                CoroutineScope(Dispatchers.IO).launch {
+                    roomLocalModel.saveUser(user)
+                }
+            }
+            completion(success, user, message)
+        }
     }
 
     fun signInUser(email: String, password: String, completion: AuthCompletion) {
-        firebaseAuthModel.signInUser(email, password, completion)
+        firebaseAuthModel.signInUser(email, password) { success, user, message ->
+            if (success && user != null) {
+                // Save user to Room cache
+                CoroutineScope(Dispatchers.IO).launch {
+                    roomLocalModel.saveUser(user)
+                }
+            }
+            completion(success, user, message)
+        }
     }
 
     fun updateUser(
@@ -74,11 +140,23 @@ class Model private constructor() {
         profileImageUrl: String? = null,
         completion: AuthCompletion
     ) {
-        firebaseAuthModel.updateUser(currentUser, username, discordTag, profileImageUrl, completion)
+        firebaseAuthModel.updateUser(currentUser, username, discordTag, profileImageUrl) { success, user, message ->
+            if (success && user != null) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    roomLocalModel.updateUser(user)
+                }
+            }
+            completion(success, user, message)
+        }
     }
 
     fun signOut() {
         firebaseAuthModel.signOut()
+        // Clear local cache on sign out
+        CoroutineScope(Dispatchers.IO).launch {
+            roomLocalModel.clearAllPosts()
+            roomLocalModel.clearAllUsers()
+        }
     }
 
     fun uploadProfilePicture(
