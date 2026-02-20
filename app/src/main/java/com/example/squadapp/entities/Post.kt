@@ -7,15 +7,14 @@ import java.util.Date
 @Parcelize
 data class Post(
     val id: String,
-    val image: String,  // image URL from Firebase Storage
-    val user: User,  // Uses User (without password) instead of UserDTO
+    val image: String,
+    val user: User,
     val description: String,
     val creationTime: Date,
     val gameId: Int
 ) : Parcelable {
 
     companion object {
-        // Post JSON keys
         const val POST_IMAGE = "image"
         const val POST_USER = "user"
         const val POST_DESCRIPTION = "description"

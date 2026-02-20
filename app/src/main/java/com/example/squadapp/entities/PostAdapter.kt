@@ -44,7 +44,6 @@ class PostAdapter(
         val gamePlatforms: TextView = itemView.findViewById(R.id.game_platforms_text)
 
         fun bind(post: Post, onDeletePost: ((Post) -> Unit)?, onEditPost: ((Post) -> Unit)?) {
-            // Load post image from URL using Glide
             postImageLoader.visibility = View.VISIBLE
             Glide.with(itemView.context)
                 .load(post.image)
@@ -74,7 +73,6 @@ class PostAdapter(
                 })
                 .into(postImage)
 
-            // Load user profile image from URL using Glide
             Glide.with(itemView.context)
                 .load(post.user.profileImage)
                 .placeholder(R.drawable.user_profile_placeholder)
@@ -87,20 +85,16 @@ class PostAdapter(
             postTime.text = TimeUtils.getTimeAgoString(post.creationTime)
             postText.text = post.description
 
-            // Fetch game data from RAWG API
             Model.shared.searchGameById(post.gameId) { rawgGame ->
                 if (rawgGame != null) {
-                    // Set game name
                     gameName.text = rawgGame.name
 
-                    // Set game rating
                     if (rawgGame.rating != null && rawgGame.rating > 0) {
                         gameRating.text = String.format(Locale.US, itemView.context.getString(R.string.game_rating_format), rawgGame.rating)
                     } else {
                         gameRating.text = ""
                     }
 
-                    // Set platforms
                     val platforms = rawgGame.platforms?.mapNotNull { it.platform?.name } ?: emptyList()
                     if (platforms.isNotEmpty()) {
                         gamePlatforms.text = platforms.joinToString(", ")
@@ -108,25 +102,21 @@ class PostAdapter(
                         gamePlatforms.text = itemView.context.getString(R.string.no_platform_information)
                     }
                 } else {
-                    // Fallback if game data couldn't be fetched
                     gameName.text = itemView.context.getString(R.string.unknown_game)
                     gameRating.text = ""
                     gamePlatforms.text = itemView.context.getString(R.string.no_platform_information)
                 }
             }
 
-            // Copy Discord tag on button click
             copyDiscordBtn.setOnClickListener {
                 val clipboard =
                     itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("Discord Tag", post.user.discordTag)
                 clipboard.setPrimaryClip(clip)
-                // Optional: Show a toast message
                 Toast.makeText(itemView.context, itemView.context.getString(R.string.discord_tag_copied), Toast.LENGTH_SHORT).show()
             }
 
-            // Profile mode: show edit + delete, hide copy discord
-            // Home mode: show copy discord, hide edit + delete
+            // Profile mode shows edit/delete; Home mode shows copy-discord
             if (onDeletePost != null) {
                 copyDiscordBtn.visibility = View.GONE
                 editPostBtn.visibility = View.VISIBLE

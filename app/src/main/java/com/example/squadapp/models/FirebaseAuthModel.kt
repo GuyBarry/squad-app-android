@@ -43,29 +43,24 @@ class FirebaseAuthModel {
     }
 
     fun signUpUser(password: String, newUser: NewUser, completion: AuthCompletion) {
-        // Step 1: Check if username is already taken
         db.collection(USERS)
             .whereEqualTo(User.USER_USERNAME, newUser.username)
             .get()
             .addOnSuccessListener { usernameSnapshot ->
                 if (!usernameSnapshot.isEmpty) {
-                    Log.d("FirebaseAuthModel", "Username already exists: ${newUser.username}")
                     completion(false, null, "Username already taken")
                     return@addOnSuccessListener
                 }
 
-                // Step 2: Check if email is already registered in Firestore
                 db.collection(USERS)
                     .whereEqualTo(User.USER_EMAIL, newUser.email)
                     .get()
                     .addOnSuccessListener { emailSnapshot ->
                         if (!emailSnapshot.isEmpty) {
-                            Log.d("FirebaseAuthModel", "Email already registered: ${newUser.email}")
                             completion(false, null, "An account with this email already exists")
                             return@addOnSuccessListener
                         }
 
-                        // Step 3: Create Firebase Auth account
                         auth.createUserWithEmailAndPassword(newUser.email, password)
                             .addOnSuccessListener { authResult ->
                                 val uid = authResult.user!!.uid
@@ -84,7 +79,7 @@ class FirebaseAuthModel {
                                         completion(true, user, "Sign up successful!")
                                     }
                                     .addOnFailureListener { exception ->
-                                        // Auth account was created but Firestore save failed – clean up auth user
+                                        // Auth account was created but Firestore save failed — roll back auth user
                                         authResult.user?.delete()
                                         Log.e("FirebaseAuthModel", "Error saving user profile: ${exception.message}")
                                         completion(false, null, "Failed to create account: ${exception.message}")
@@ -147,7 +142,6 @@ class FirebaseAuthModel {
                 val usernameExists = querySnapshot.documents.any { it.id != currentUser.id }
 
                 if (usernameExists) {
-                    Log.d("FirebaseAuthModel", "Username already taken: $username")
                     completion(false, null, "Username already taken")
                     return@addOnSuccessListener
                 }
@@ -164,7 +158,7 @@ class FirebaseAuthModel {
                 db.collection(USERS).document(currentUser.id)
                     .update(updates)
                     .addOnSuccessListener {
-                        // Build updated User directly from known values — no extra Firestore fetch needed
+                        // Build the updated User from known values — avoids an extra Firestore fetch
                         val updatedUser = currentUser.copy(
                             username = username,
                             discordTag = discordTag,

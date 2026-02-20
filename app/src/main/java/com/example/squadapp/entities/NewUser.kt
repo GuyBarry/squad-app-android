@@ -1,20 +1,13 @@
 package com.example.squadapp.entities
 
-/**
- * NewUser - Entity for creating new users WITHOUT an ID
- * Used for inserting new users into Firestore after Firebase Auth creates the account.
- * Password is handled entirely by Firebase Auth; it is NOT stored in Firestore.
- */
+
 data class NewUser(
-    val profileImage: String,  // profile image URL from Firebase Storage
+    val profileImage: String,
     val username: String,
     val email: String,
     val discordTag: String
 ) {
     companion object {
-        /**
-         * Serializes NewUser to Map for Firestore insertion (without ID or password)
-         */
         fun serialize(newUser: NewUser): Map<String, Any?> {
             return hashMapOf(
                 User.USER_PROFILE_IMAGE to newUser.profileImage,

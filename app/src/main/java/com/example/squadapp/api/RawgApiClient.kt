@@ -48,11 +48,6 @@ class RawgApiClient {
         }
     }
 
-    /**
-     * Search games by name
-     * @param gameName Name of the game to search for
-     * @param onSuccess Callback with list of games when search is successful
-     */
     fun searchGamesByName(
         gameName: String,
         onSuccess: RawgGamesCompletion
@@ -84,11 +79,6 @@ class RawgApiClient {
         })
     }
 
-    /**
-     * Search game by ID
-     * @param gameId ID of the game to retrieve
-     * @param onSuccess Callback with the game object when search is successful (null if not found)
-     */
     fun searchGameById(
         gameId: Int,
         onSuccess: RawgGameCompletion

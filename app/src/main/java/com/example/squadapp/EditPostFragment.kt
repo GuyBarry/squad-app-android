@@ -8,7 +8,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -74,8 +73,7 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
                         inputStream?.close()
                         selectedImageUri = null
                     }
-                } catch (e: Exception) {
-                    Log.e("EditPostFragment", "Error reading camera image", e)
+                } catch (_: Exception) {
                     selectedImageUri = null
                 }
             }
@@ -265,7 +263,6 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
             selectedImageUri = CameraUtils.createCameraImageUri(requireContext())
             takePictureLauncher.launch(CameraUtils.buildCameraIntent(selectedImageUri!!))
         } catch (ex: Exception) {
-            Log.e("EditPostFragment", "Error opening camera", ex)
             Toast.makeText(context, getString(R.string.error_opening_camera, ex.message), Toast.LENGTH_LONG).show()
         }
     }

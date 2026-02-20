@@ -31,7 +31,6 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.nav_host_fragment_main) as NavHostFragment
         navController = navHostFragment.navController
 
-        // Set graph with the user as start-destination arg for HomeFragment
         navController.setGraph(R.navigation.nav_main, HomeFragmentArgs(user = user).toBundle())
 
         val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottom_navigation)

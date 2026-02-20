@@ -21,7 +21,6 @@ class GameListAdapter(
         private val gamePlatform: TextView = itemView.findViewById(R.id.game_platform)
 
         fun bind(game: Game) {
-            // Load image from URL if available, otherwise use resource ID
             if (game.imageUrl != null) {
                 Glide.with(itemView.context)
                     .load(game.imageUrl)

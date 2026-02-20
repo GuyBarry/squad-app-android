@@ -2,7 +2,6 @@ package com.example.squadapp
 
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -145,12 +144,10 @@ class EditProfileFragment : Fragment() {
             selectedImageUri = CameraUtils.createCameraImageUri(requireContext())
             takePictureLauncher.launch(CameraUtils.buildCameraIntent(selectedImageUri!!))
         } catch (ex: Exception) {
-            Log.e("EditProfileFragment", "Error opening camera", ex)
             Toast.makeText(context, getString(R.string.error_opening_camera, ex.message), Toast.LENGTH_LONG).show()
         }
     }
 
-    /** Loads a remote/local URL into the profile photo using Glide (circle-cropped). */
     private fun loadProfileImageFromUrl(url: String) {
         Glide.with(this).load(url)
             .placeholder(R.drawable.user_profile_placeholder)
@@ -158,7 +155,6 @@ class EditProfileFragment : Fragment() {
             .circleCrop().into(profilePhoto)
     }
 
-    /** Loads a local content [Uri] into the profile photo using Glide (circle-cropped). */
     private fun loadProfileImageFromUri(uri: Uri) {
         Glide.with(this).load(uri)
             .placeholder(R.drawable.user_profile_placeholder)
@@ -166,7 +162,6 @@ class EditProfileFragment : Fragment() {
             .circleCrop().into(profilePhoto)
     }
 
-    /** Shows the cancel button and hides gallery/camera buttons. */
     private fun showCancelImageButton() {
         cancelImageButton.visibility = View.VISIBLE
         galleryButton.visibility = View.GONE
