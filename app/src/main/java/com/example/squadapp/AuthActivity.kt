@@ -31,14 +31,12 @@ class AuthActivity : AppCompatActivity() {
         val loadingIndicator = findViewById<ProgressBar>(R.id.auth_loading_indicator)
         val fragmentContainer = findViewById<View>(R.id.nav_host_fragment_auth)
 
-        // Observe navigation events from fragments
         lifecycleScope.launch {
             authViewModel.navigateToMain.collect { user ->
                 navigateToMain(user)
             }
         }
 
-        // Show loading, hide fragment container while checking session
         loadingIndicator.visibility = View.VISIBLE
         fragmentContainer.visibility = View.GONE
 
@@ -46,10 +44,8 @@ class AuthActivity : AppCompatActivity() {
             runOnUiThread {
                 loadingIndicator.visibility = View.GONE
                 if (success && user != null) {
-                    // Already logged in — go straight to MainActivity
                     authViewModel.onAuthSuccess(user)
                 } else {
-                    // No active session — show sign-in screen
                     fragmentContainer.visibility = View.VISIBLE
                 }
             }

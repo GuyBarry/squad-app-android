@@ -30,13 +30,11 @@ class HomeFragment : Fragment() {
         recyclerView?.layoutManager = LinearLayoutManager(requireContext())
         loadingIndicator = view.findViewById(R.id.home_loading_indicator)
 
-        // Observe loading state
         homeViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             loadingIndicator?.visibility = if (isLoading) View.VISIBLE else View.GONE
             recyclerView?.visibility = if (isLoading) View.GONE else View.VISIBLE
         }
 
-        // Observe posts
         homeViewModel.posts.observe(viewLifecycleOwner) { posts ->
             recyclerView?.adapter = PostAdapter(posts)
         }
@@ -46,7 +44,6 @@ class HomeFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // Refresh posts when returning to home (e.g., after posting)
         homeViewModel.loadPosts()
     }
 }

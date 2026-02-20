@@ -25,22 +25,19 @@ class FirebaseModel {
     }
 
     fun getAllPosts(completion: PostsCompletion) {
-        // Step 1: Fetch all posts
         db.collection(POSTS).get().addOnSuccessListener { querySnapshot ->
             val postDocuments = querySnapshot.documents
 
             if (postDocuments.isEmpty()) {
-                Log.d("FirebaseModel", "No posts found")
                 completion(emptyList())
                 return@addOnSuccessListener
             }
 
-            // Step 2: Extract all unique user IDs from posts
             val userIds = mutableSetOf<String>()
             val postsData = mutableListOf<Map<String, Any?>>()
 
             postDocuments.forEach { postDocument ->
-                // Properly convert Timestamp from Firebase to Date
+                // Timestamp must be cast explicitly before converting to java.sql.Date
                 val timestamp = postDocument.get(POST_CREATION_TIME) as? Timestamp
                 val creationTime = if (null != timestamp)
                     Date(timestamp.toDate().time) else Date(System.currentTimeMillis())
@@ -61,36 +58,19 @@ class FirebaseModel {
                 }
             }
 
-            Log.d(
-                "FirebaseModel",
-                "Fetched ${postDocuments.size} posts with ${userIds.size} unique users"
-            )
-
-            // Step 3: Fetch all users in batch
             if (userIds.isNotEmpty()) {
                 fetchAllUsers(userIds.toList()) { usersMap, foundUserIds ->
-                    // Step 4: Filter out posts whose users don't exist
+                    // Filter out posts whose authors have been deleted
                     val filteredPostsData = postsData.filter { postData ->
                         val userId = postData["user"] as? String
                         userId != null && foundUserIds.contains(userId)
                     }
 
-                    Log.d(
-                        "FirebaseModel",
-                        "Filtered posts: ${filteredPostsData.size}/${postsData.size} (removed ${postsData.size - filteredPostsData.size} posts with missing users)"
-                    )
-
-                    // Step 5: Populate posts with user data
                     val posts = combinePostsWithUsers(filteredPostsData, usersMap).toMutableList()
                     posts.sortByDescending { it.creationTime }
-                    Log.d(
-                        "FirebaseModel",
-                        "Successfully created ${posts.size} posts with user data"
-                    )
                     completion(posts)
                 }
             } else {
-                // No users to fetch, create posts with fallback users
                 val posts = combinePostsWithUsers(postsData, emptyMap()).toMutableList()
                 completion(posts)
             }
@@ -102,7 +82,6 @@ class FirebaseModel {
     }
 
     fun getPostsByUser(userId: String, completion: PostsCompletion) {
-        // Step 1: Query posts where POST_USER equals userId
         db.collection(POSTS)
             .whereEqualTo(POST_USER, userId)
             .get()
@@ -110,16 +89,14 @@ class FirebaseModel {
                 val postDocuments = querySnapshot.documents
 
                 if (postDocuments.isEmpty()) {
-                    Log.d("FirebaseModel", "No posts found for user: $userId")
                     completion(emptyList())
                     return@addOnSuccessListener
                 }
 
-                // Step 2: Extract post data
                 val postsData = mutableListOf<Map<String, Any?>>()
 
                 postDocuments.forEach { postDocument ->
-                    // Properly convert Timestamp from Firebase to Date
+                    // Timestamp must be cast explicitly before converting to java.sql.Date
                     val timestamp = postDocument.get(POST_CREATION_TIME) as? Timestamp
                     val creationTime = if (null != timestamp)
                         Date(timestamp.toDate().time) else Date(System.currentTimeMillis())
@@ -135,20 +112,13 @@ class FirebaseModel {
                     postsData.add(postData)
                 }
 
-                Log.d("FirebaseModel", "Fetched ${postDocuments.size} posts for user: $userId")
-
-                // Step 3: Fetch the user data
                 db.collection(USERS).document(userId).get()
                     .addOnSuccessListener { userDocument ->
                         if (userDocument.exists()) {
                             val user = deserializeUser(userDocument.data ?: emptyMap()).copy(id = userId)
-
-                            // Step 4: Create posts with user data
                             val usersMap = mapOf(userId to user)
                             val posts = combinePostsWithUsers(postsData, usersMap).toMutableList()
                             posts.sortByDescending { it.creationTime }
-
-                            Log.d("FirebaseModel", "Successfully created ${posts.size} posts for user: $userId")
                             completion(posts)
                         } else {
                             Log.w("FirebaseModel", "User document not found: $userId - returning empty list")
@@ -157,15 +127,11 @@ class FirebaseModel {
                     }
                     .addOnFailureListener { exception ->
                         Log.e("FirebaseModel", "Error fetching user $userId: ${exception.message}")
-                        // Return empty list instead of creating posts with fallback user
                         completion(emptyList())
                     }
             }
             .addOnFailureListener { exception ->
-                Log.e(
-                    "FirebaseModel",
-                    "Error fetching posts for user $userId: ${exception.message}"
-                )
+                Log.e("FirebaseModel", "Error fetching posts for user $userId: ${exception.message}")
                 completion(emptyList())
             }
     }
@@ -190,16 +156,11 @@ class FirebaseModel {
                         val user = deserializeUser(userDocument.data ?: emptyMap()).copy(id = userId)
                         usersMap[userId] = user
                         foundUserIds.add(userId)
-                        Log.d("FirebaseModel", "Fetched user: $userId")
                     } else {
                         Log.w("FirebaseModel", "User document not found: $userId")
                     }
                     fetchedCount++
                     if (fetchedCount == userIds.size) {
-                        Log.d(
-                            "FirebaseModel",
-                            "All users fetched. Found: ${usersMap.size}/${userIds.size}"
-                        )
                         onComplete(usersMap, foundUserIds)
                     }
                 }
@@ -207,10 +168,6 @@ class FirebaseModel {
                     Log.e("FirebaseModel", "Error fetching user $userId: ${exception.message}")
                     fetchedCount++
                     if (fetchedCount == userIds.size) {
-                        Log.d(
-                            "FirebaseModel",
-                            "All users fetched (with failures). Found: ${usersMap.size}/${userIds.size}"
-                        )
                         onComplete(usersMap, foundUserIds)
                     }
                 }
@@ -229,12 +186,9 @@ class FirebaseModel {
             val userId = postData["user"] as? String
             val gameId = postData["gameId"] as? Int ?: 0
 
-            // Only create post if user exists in usersMap
             val user = if (userId != null && usersMap.containsKey(userId)) {
                 usersMap[userId]!!
             } else {
-                // Return null to filter out this post
-                Log.d("FirebaseModel", "Filtering out post $postId - user not found: $userId")
                 return@mapNotNull null
             }
 
@@ -254,7 +208,6 @@ class FirebaseModel {
 
         db.collection(POSTS).add(postData)
             .addOnSuccessListener {
-                Log.d("FirebaseModel", "Post added successfully with ID: ${it.id}")
                 completion(true, "Post published successfully!")
             }
             .addOnFailureListener { exception ->
@@ -266,7 +219,6 @@ class FirebaseModel {
     fun deletePost(postId: String, completion: ResultCompletion) {
         db.collection(POSTS).document(postId).delete()
             .addOnSuccessListener {
-                Log.d("FirebaseModel", "Post deleted successfully with ID: $postId")
                 completion(true, "Post deleted successfully!")
             }
             .addOnFailureListener { exception ->
@@ -278,7 +230,6 @@ class FirebaseModel {
     fun updatePost(postId: String, updates: Map<String, Any?>, completion: ResultCompletion) {
         db.collection(POSTS).document(postId).update(updates)
             .addOnSuccessListener {
-                Log.d("FirebaseModel", "Post updated successfully with ID: $postId")
                 completion(true, "Post updated successfully!")
             }
             .addOnFailureListener { exception ->

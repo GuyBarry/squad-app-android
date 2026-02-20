@@ -3,14 +3,11 @@ package com.example.squadapp
 import Game
 import com.example.squadapp.entities.GameListAdapter
 import android.content.Context
-import android.content.Intent
 import android.view.inputmethod.InputMethodManager
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -22,12 +19,14 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.squadapp.entities.RawgGame
+import com.example.squadapp.utils.CameraUtils
+import com.example.squadapp.utils.GalleryUtils
+import com.example.squadapp.utils.GameUiUtils.mapRawgGamesToUiGames
+import com.example.squadapp.utils.GameUiUtils.toRawgGame
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import android.widget.ImageView
 import android.widget.TextView
-import java.util.Date
 
 class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
     private val editPostViewModel: EditPostViewModel by viewModels()
@@ -51,19 +50,12 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
     private var imageChanged = false
     private val displayedGames = mutableListOf<Game>()
 
-    private val pickImageLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            selectedImageUri = result.data?.data
-            if (selectedImageUri != null) {
-                imageChanged = true
-                imagePreview.setImageURI(selectedImageUri)
-                imagePreview.visibility = View.VISIBLE
-                imagePlaceholder.visibility = View.GONE
-                cancelImageButton.visibility = View.VISIBLE
-            }
-        }
+    // ── Activity-result launchers ─────────────────────────────────────────────
+
+    private val pickImageLauncher = GalleryUtils.registerGalleryLauncher(this) { uri ->
+        selectedImageUri = uri
+        imageChanged = true
+        showSelectedImage(uri)
     }
 
     private val takePictureLauncher = registerForActivityResult(
@@ -76,16 +68,12 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
                     if (inputStream != null && inputStream.available() > 0) {
                         inputStream.close()
                         imageChanged = true
-                        imagePreview.setImageURI(selectedImageUri)
-                        imagePreview.visibility = View.VISIBLE
-                        imagePlaceholder.visibility = View.GONE
-                        cancelImageButton.visibility = View.VISIBLE
+                        showSelectedImage(selectedImageUri!!)
                     } else {
                         inputStream?.close()
                         selectedImageUri = null
                     }
-                } catch (e: Exception) {
-                    Log.e("EditPostFragment", "Error reading camera image", e)
+                } catch (_: Exception) {
                     selectedImageUri = null
                 }
             }
@@ -98,23 +86,35 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) launchCamera()
-        else Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_LONG).show()
+        else Toast.makeText(context, getString(R.string.camera_permission_required), Toast.LENGTH_LONG).show()
     }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     override fun onCreateView(
         inflater: android.view.LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_edit_post, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_edit_post, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         val post = args.post
         val user = args.user
 
+        bindViews(view)
+        setupGamesList()
+        setupSearchInput()
+        setupButtonListeners(post)
+        initializeWithPostData(post)
+        observeViewModel(post, user)
+
+        editPostViewModel.loadPostData(post.gameId)
+    }
+
+    // ── View binding & setup ──────────────────────────────────────────────────
+
+    private fun bindViews(view: View) {
         imagePreview = view.findViewById(R.id.post_image_preview)
         imagePlaceholder = view.findViewById(R.id.image_placeholder)
         imageBoxContainer = view.findViewById(R.id.image_box_container)
@@ -127,99 +127,14 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
         publishBtn = view.findViewById(R.id.publish_btn)
         loadingIndicator = view.findViewById(R.id.edit_post_loading_indicator)
         contentView = view.findViewById(R.id.edit_post_content)
+    }
 
-        setupGamesList()
-        setupSearchInput()
-        initializeWithPostData(post)
-
-        // Show loader until game data is ready, then reveal form
-        editPostViewModel.isLoadingData.observe(viewLifecycleOwner) { isLoading ->
-            loadingIndicator.visibility = if (isLoading) View.VISIBLE else View.GONE
-            contentView.visibility = if (isLoading) View.GONE else View.VISIBLE
-        }
-
-        // Kick off the async game fetch
-        editPostViewModel.loadPostData(post.gameId)
-
+    private fun setupButtonListeners(post: com.example.squadapp.entities.Post) {
         galleryButton.setOnClickListener { openGallery() }
         cameraButton.setOnClickListener { openCamera() }
         cancelImageButton.setOnClickListener { cancelImage() }
-
         publishBtn.setOnClickListener {
             if (editPostViewModel.isPublishing.value != true) updatePost(post)
-        }
-
-        // Observe game search results
-        editPostViewModel.games.observe(viewLifecycleOwner) { rawgGames ->
-            val games = rawgGames.map { rawgGame ->
-                val platforms = rawgGame.platforms?.mapNotNull { it.platform?.name } ?: emptyList()
-                Game(
-                    name = rawgGame.name,
-                    platforms = platforms,
-                    imageResId = android.R.drawable.ic_menu_gallery,
-                    id = rawgGame.id,
-                    imageUrl = rawgGame.backgroundImage
-                )
-            }
-            val oldSize = displayedGames.size
-            displayedGames.clear()
-            if (oldSize > 0) gameListAdapter.notifyItemRangeRemoved(0, oldSize)
-            displayedGames.addAll(games)
-            if (games.isNotEmpty()) gameListAdapter.notifyItemRangeInserted(0, games.size)
-        }
-
-        // Observe publishing state
-        editPostViewModel.isPublishing.observe(viewLifecycleOwner) { isPublishing ->
-            publishBtn.isEnabled = !isPublishing
-            descriptionInput.isEnabled = !isPublishing
-            gameSearchInput.isEnabled = !isPublishing
-            galleryButton.isEnabled = !isPublishing
-            cameraButton.isEnabled = !isPublishing
-            cancelImageButton.isEnabled = !isPublishing
-            if (isPublishing) {
-                view.clearFocus()
-                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.hideSoftInputFromWindow(view.windowToken, 0)
-            }
-        }
-
-        editPostViewModel.publishProgress.observe(viewLifecycleOwner) { progress ->
-            publishBtn.text = progress ?: getString(R.string.update_post)
-        }
-
-        // Observe update result
-        editPostViewModel.publishResult.observe(viewLifecycleOwner) { (success, message) ->
-            if (success) {
-                Toast.makeText(context, "Post updated successfully!", Toast.LENGTH_SHORT).show()
-                navigateToProfile(user)
-            } else {
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    private fun initializeWithPostData(post: com.example.squadapp.entities.Post) {
-        // Load existing image via Glide
-        Glide.with(this)
-            .load(post.image)
-            .placeholder(R.drawable.post_image_placeholder_2)
-            .error(R.drawable.post_image_placeholder_2)
-            .into(imagePreview)
-        imagePreview.visibility = View.VISIBLE
-        imagePlaceholder.visibility = View.GONE
-        cancelImageButton.visibility = View.VISIBLE
-
-        // Pre-fill description
-        descriptionInput.setText(post.description)
-
-        // Game name is set once isLoadingData turns false (see observer in onViewCreated)
-        editPostViewModel.isLoadingData.observe(viewLifecycleOwner) { isLoading ->
-            if (!isLoading) {
-                val gameName = editPostViewModel.selectedGame?.name ?: return@observe
-                if (gameSearchInput.text.toString() != gameName) {
-                    gameSearchInput.setText(gameName, TextView.BufferType.EDITABLE)
-                }
-            }
         }
     }
 
@@ -242,25 +157,17 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
                 val selectedGame = editPostViewModel.selectedGame
 
                 if (s != null && selectedGame != null && s.toString() == selectedGame.name) {
-                    val oldSize = displayedGames.size
-                    displayedGames.clear()
-                    if (oldSize > 0) gameListAdapter.notifyItemRangeRemoved(0, oldSize)
-                    displayedGames.add(Game(
-                        name = selectedGame.name,
-                        platforms = selectedGame.platforms?.mapNotNull { it.platform?.name } ?: emptyList(),
-                        imageResId = android.R.drawable.ic_menu_gallery,
-                        id = selectedGame.id,
-                        imageUrl = selectedGame.backgroundImage
-                    ))
-                    gameListAdapter.notifyItemInserted(0)
+                    replaceDisplayedGamesWithSelected(selectedGame)
                     return
                 }
 
-                if (s != null && s.length >= 2 && editPostViewModel.inputChangeCounter >= 2) {
-                    editPostViewModel.searchGames(s.toString())
-                } else if (s != null && s.isEmpty()) {
-                    editPostViewModel.clearGames()
-                    editPostViewModel.selectedGame = null
+                when {
+                    s != null && s.length >= 2 && editPostViewModel.inputChangeCounter >= 2 ->
+                        editPostViewModel.searchGames(s.toString())
+                    s != null && s.isEmpty() -> {
+                        editPostViewModel.clearGames()
+                        editPostViewModel.selectedGame = null
+                    }
                 }
             }
 
@@ -268,36 +175,95 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
         })
     }
 
+    private fun initializeWithPostData(post: com.example.squadapp.entities.Post) {
+        Glide.with(this)
+            .load(post.image)
+            .placeholder(R.drawable.post_image_placeholder_2)
+            .error(R.drawable.post_image_placeholder_2)
+            .into(imagePreview)
+        imagePreview.visibility = View.VISIBLE
+        imagePlaceholder.visibility = View.GONE
+        cancelImageButton.visibility = View.VISIBLE
+
+        descriptionInput.setText(post.description)
+
+        // Fill the game search input once the initial game data finishes loading
+        editPostViewModel.isLoadingData.observe(viewLifecycleOwner) { isLoading ->
+            if (!isLoading) {
+                val gameName = editPostViewModel.selectedGame?.name ?: return@observe
+                if (gameSearchInput.text.toString() != gameName) {
+                    gameSearchInput.setText(gameName, TextView.BufferType.EDITABLE)
+                }
+            }
+        }
+    }
+
+    // ── ViewModel observers ───────────────────────────────────────────────────
+
+    private fun observeViewModel(
+        @Suppress("UNUSED_PARAMETER") post: com.example.squadapp.entities.Post,
+        user: com.example.squadapp.entities.User
+    ) {
+        editPostViewModel.isLoadingData.observe(viewLifecycleOwner) { isLoading ->
+            loadingIndicator.visibility = if (isLoading) View.VISIBLE else View.GONE
+            contentView.visibility = if (isLoading) View.GONE else View.VISIBLE
+        }
+
+        editPostViewModel.games.observe(viewLifecycleOwner) { rawgGames ->
+            updateDisplayedGames(mapRawgGamesToUiGames(rawgGames))
+        }
+
+        editPostViewModel.isPublishing.observe(viewLifecycleOwner) { isPublishing ->
+            setFormEnabled(!isPublishing)
+            if (isPublishing) {
+                view?.clearFocus()
+                val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(view?.windowToken, 0)
+            }
+        }
+
+        editPostViewModel.publishProgress.observe(viewLifecycleOwner) { progress ->
+            publishBtn.text = progress ?: getString(R.string.update_post)
+        }
+
+        editPostViewModel.publishResult.observe(viewLifecycleOwner) { (success, message) ->
+            if (success) {
+                Toast.makeText(context, getString(R.string.post_updated_successfully), Toast.LENGTH_SHORT).show()
+                navigateToProfile(user)
+            } else {
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    // ── Image helpers ─────────────────────────────────────────────────────────
+
+    /** Shows the picked/captured image and reveals the cancel button. */
+    private fun showSelectedImage(uri: Uri) {
+        imagePreview.setImageURI(uri)
+        imagePreview.visibility = View.VISIBLE
+        imagePlaceholder.visibility = View.GONE
+        cancelImageButton.visibility = View.VISIBLE
+    }
+
     private fun openGallery() {
-        val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        pickImageLauncher.launch(galleryIntent)
+        GalleryUtils.openGallery(pickImageLauncher)
     }
 
     private fun openCamera() {
         if (androidx.core.content.ContextCompat.checkSelfPermission(
                 requireContext(), android.Manifest.permission.CAMERA
             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        ) {
-            launchCamera()
-        } else {
-            requestPermissionLauncher.launch(android.Manifest.permission.CAMERA)
-        }
+        ) launchCamera()
+        else requestPermissionLauncher.launch(android.Manifest.permission.CAMERA)
     }
 
     private fun launchCamera() {
         try {
-            val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(Date())
-            val storageDir = requireContext().getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
-            val photoFile = java.io.File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
-            selectedImageUri = androidx.core.content.FileProvider.getUriForFile(
-                requireContext(), "${requireContext().packageName}.fileprovider", photoFile
-            )
-            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, selectedImageUri)
-            takePictureLauncher.launch(cameraIntent)
+            selectedImageUri = CameraUtils.createCameraImageUri(requireContext())
+            takePictureLauncher.launch(CameraUtils.buildCameraIntent(selectedImageUri!!))
         } catch (ex: Exception) {
-            Log.e("EditPostFragment", "Error opening camera", ex)
-            Toast.makeText(context, "Error opening camera: ${ex.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, getString(R.string.error_opening_camera, ex.message), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -310,55 +276,70 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
         imagePlaceholder.visibility = View.VISIBLE
     }
 
+    // ── Games list helpers ────────────────────────────────────────────────────
+
+    /** Replaces the games list with just the already-selected game. */
+    private fun replaceDisplayedGamesWithSelected(selectedGame: com.example.squadapp.entities.RawgGame) {
+        val oldSize = displayedGames.size
+        displayedGames.clear()
+        if (oldSize > 0) gameListAdapter.notifyItemRangeRemoved(0, oldSize)
+        displayedGames.add(
+            Game(
+                name = selectedGame.name,
+                platforms = selectedGame.platforms?.mapNotNull { it.platform?.name } ?: emptyList(),
+                imageResId = android.R.drawable.ic_menu_gallery,
+                id = selectedGame.id,
+                imageUrl = selectedGame.backgroundImage
+            )
+        )
+        gameListAdapter.notifyItemInserted(0)
+    }
+
+    private fun updateDisplayedGames(games: List<Game>) {
+        val oldSize = displayedGames.size
+        displayedGames.clear()
+        if (oldSize > 0) gameListAdapter.notifyItemRangeRemoved(0, oldSize)
+        displayedGames.addAll(games)
+        if (games.isNotEmpty()) gameListAdapter.notifyItemRangeInserted(0, games.size)
+    }
+
+    // ── Form state helpers ────────────────────────────────────────────────────
+
+    private fun setFormEnabled(enabled: Boolean) {
+        publishBtn.isEnabled = enabled
+        descriptionInput.isEnabled = enabled
+        gameSearchInput.isEnabled = enabled
+        galleryButton.isEnabled = enabled
+        cameraButton.isEnabled = enabled
+        cancelImageButton.isEnabled = enabled
+    }
+
+    // ── Update & navigation ───────────────────────────────────────────────────
+
     private fun updatePost(post: com.example.squadapp.entities.Post) {
         val description = descriptionInput.text.toString()
 
-        // If image was changed and no new image selected, require one
         if (imageChanged && selectedImageUri == null) {
-            Toast.makeText(context, "Please select or take an image", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, getString(R.string.please_select_image), Toast.LENGTH_LONG).show()
             return
         }
         if (editPostViewModel.selectedGame == null) {
-            Toast.makeText(context, "Please select a game from the list", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.please_select_game), Toast.LENGTH_SHORT).show()
             return
         }
         if (description.isEmpty()) {
-            Toast.makeText(context, "Please add a description", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.please_add_description), Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Pass null for imageUri if image wasn't changed (keep existing)
         val imageUri = if (imageChanged) selectedImageUri else null
         editPostViewModel.updatePost(post, imageUri, description)
     }
 
     private fun navigateToProfile(user: com.example.squadapp.entities.User) {
-        findNavController().navigate(
-            R.id.profileFragment,
-            ProfileFragmentArgs(user = user).toBundle()
-        )
-        val bottomNavigation = activity?.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottom_navigation)
-        bottomNavigation?.selectedItemId = R.id.nav_profile
+        findNavController().navigate(R.id.profileFragment, ProfileFragmentArgs(user = user).toBundle())
+        activity?.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottom_navigation)
+            ?.selectedItemId = R.id.nav_profile
     }
-
-    // Helper to convert a Game (UI model) back to RawgGame for the ViewModel
-    private fun Game.toRawgGame(): RawgGame = RawgGame(
-        id = this.id,
-        name = this.name,
-        slug = "",
-        released = null,
-        backgroundImage = this.imageUrl,
-        rating = null,
-        ratingsCount = null,
-        metacritic = null,
-        platforms = this.platforms.map { platformName ->
-            com.example.squadapp.entities.PlatformInfo(
-                com.example.squadapp.entities.Platform(0, platformName, "")
-            )
-        },
-        genres = null,
-        description = null,
-        shortScreenshots = null
-    )
 }
 

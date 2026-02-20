@@ -1,14 +1,6 @@
 package com.example.squadapp
 
-import android.content.Context
 import android.os.Bundle
-import android.view.inputmethod.InputMethodManager
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.TextPaint
-import android.text.method.LinkMovementMethod
-import android.text.style.ClickableSpan
-import android.text.style.UnderlineSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +13,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.squadapp.entities.NewUser
+import com.example.squadapp.utils.SpannableUtils
 
 class SignUpFragment : Fragment() {
 
@@ -40,7 +33,15 @@ class SignUpFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        bindViews(view)
+        setupSignInLink()
+        setupButtonListeners()
+        observeViewModel(view)
+    }
 
+    // ── View binding ──────────────────────────────────────────────────────────
+
+    private fun bindViews(view: View) {
         usernameEditText = view.findViewById(R.id.signup_username)
         emailEditText = view.findViewById(R.id.signup_email)
         discordTagEditText = view.findViewById(R.id.signup_discord_tag)
@@ -48,32 +49,51 @@ class SignUpFragment : Fragment() {
         confirmPasswordEditText = view.findViewById(R.id.signup_confirm_password)
         signUpButton = view.findViewById(R.id.signup_button)
         signInLink = view.findViewById(R.id.signup_signin_link)
+    }
 
-        setupSignInLink()
-
+    private fun setupButtonListeners() {
         signUpButton.setOnClickListener { handleSignUp() }
+    }
 
+    private fun setupSignInLink() {
+        SpannableUtils.setClickableLink(
+            textView = signInLink,
+            fullText = getString(R.string.already_have_account_sign_in),
+            clickableSubstring = getString(R.string.sign_in_here),
+            onClick = { findNavController().navigate(R.id.action_signUpFragment_to_signInFragment) }
+        )
+    }
+
+    // ── ViewModel observers ───────────────────────────────────────────────────
+
+    private fun observeViewModel(view: View) {
         signUpViewModel.isSigningUp.observe(viewLifecycleOwner) { isLoading ->
-            signUpButton.isEnabled = !isLoading
+            setFormEnabled(!isLoading, view)
             signUpButton.text = if (isLoading) getString(R.string.signing_up) else getString(R.string.sign_up)
-            usernameEditText.isEnabled = !isLoading
-            emailEditText.isEnabled = !isLoading
-            discordTagEditText.isEnabled = !isLoading
-            passwordEditText.isEnabled = !isLoading
-            confirmPasswordEditText.isEnabled = !isLoading
-            if (isLoading) {
-                view.clearFocus()
-            }
         }
 
         signUpViewModel.signUpResult.observe(viewLifecycleOwner) { (success, message) ->
             if (success) {
-                Toast.makeText(context, "Sign up successful!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, getString(R.string.sign_up_successful), Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
         }
     }
+
+    // ── Form state helpers ────────────────────────────────────────────────────
+
+    private fun setFormEnabled(enabled: Boolean, rootView: View) {
+        signUpButton.isEnabled = enabled
+        usernameEditText.isEnabled = enabled
+        emailEditText.isEnabled = enabled
+        discordTagEditText.isEnabled = enabled
+        passwordEditText.isEnabled = enabled
+        confirmPasswordEditText.isEnabled = enabled
+        if (!enabled) rootView.clearFocus()
+    }
+
+    // ── Sign up ───────────────────────────────────────────────────────────────
 
     private fun handleSignUp() {
         val username = usernameEditText.text.toString().trim()
@@ -82,63 +102,45 @@ class SignUpFragment : Fragment() {
         val password = passwordEditText.text.toString().trim()
         val confirmPassword = confirmPasswordEditText.text.toString().trim()
 
-        if (username.isEmpty()) {
-            Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (email.isEmpty()) {
-            Toast.makeText(context, "Email cannot be empty", Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (discordTag.isEmpty()) {
-            Toast.makeText(context, "Discord tag cannot be empty", Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (password.isEmpty()) {
-            Toast.makeText(context, "Password cannot be empty", Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (password != confirmPassword) {
-            Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (password.length < 6) {
-            Toast.makeText(context, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
-            return
-        }
+        if (!validateSignUpFields(username, email, discordTag, password, confirmPassword)) return
 
-        val newUser = NewUser(
-            profileImage = "",
-            username = username,
-            email = email,
-            discordTag = discordTag
-        )
-
+        val newUser = NewUser(profileImage = "", username = username, email = email, discordTag = discordTag)
         signUpViewModel.signUp(password, newUser) { user ->
             authViewModel.onAuthSuccess(user)
         }
     }
 
-    private fun setupSignInLink() {
-        val fullText = "Already have an account? Sign in here"
-        val spannableString = SpannableString(fullText)
-
-        val clickableSpan = object : ClickableSpan() {
-            override fun onClick(widget: View) {
-                findNavController().navigate(R.id.action_signUpFragment_to_signInFragment)
-            }
-            override fun updateDrawState(ds: TextPaint) {
-                super.updateDrawState(ds)
-                ds.isUnderlineText = false
-            }
+    private fun validateSignUpFields(
+        username: String,
+        email: String,
+        discordTag: String,
+        password: String,
+        confirmPassword: String
+    ): Boolean {
+        if (username.isEmpty()) {
+            Toast.makeText(context, getString(R.string.username_cannot_be_empty), Toast.LENGTH_SHORT).show()
+            return false
         }
-
-        val startIndex = fullText.indexOf("Sign in here")
-        val endIndex = startIndex + "Sign in here".length
-        spannableString.setSpan(clickableSpan, startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableString.setSpan(UnderlineSpan(), startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-        signInLink.text = spannableString
-        signInLink.movementMethod = LinkMovementMethod.getInstance()
+        if (email.isEmpty()) {
+            Toast.makeText(context, getString(R.string.email_cannot_be_empty), Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (discordTag.isEmpty()) {
+            Toast.makeText(context, getString(R.string.discord_tag_cannot_be_empty), Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (password.isEmpty()) {
+            Toast.makeText(context, getString(R.string.password_cannot_be_empty), Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (password != confirmPassword) {
+            Toast.makeText(context, getString(R.string.passwords_do_not_match), Toast.LENGTH_SHORT).show()
+            return false
+        }
+        if (password.length < 6) {
+            Toast.makeText(context, getString(R.string.password_too_short), Toast.LENGTH_SHORT).show()
+            return false
+        }
+        return true
     }
 }

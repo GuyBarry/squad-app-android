@@ -6,9 +6,6 @@ import androidx.lifecycle.ViewModel
 import com.example.squadapp.entities.Post
 import com.example.squadapp.models.Model
 
-/**
- * HomeViewModel - Manages the posts feed shown in HomeFragment.
- */
 class HomeViewModel : ViewModel() {
 
     private val _posts = MutableLiveData<List<Post>>()

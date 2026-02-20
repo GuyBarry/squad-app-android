@@ -6,9 +6,6 @@ import androidx.lifecycle.ViewModel
 import com.example.squadapp.entities.Post
 import com.example.squadapp.models.Model
 
-/**
- * ProfileViewModel - Manages user profile data and their posts.
- */
 class ProfileViewModel : ViewModel() {
 
     private val _userPosts = MutableLiveData<List<Post>>()
@@ -33,7 +30,6 @@ class ProfileViewModel : ViewModel() {
         Model.shared.deletePost(postId, imageUrl) { success, message ->
             _deleteResult.postValue(Pair(success, message))
             if (success) {
-                // Reload user posts after deletion
                 loadUserPosts(userId)
             }
         }

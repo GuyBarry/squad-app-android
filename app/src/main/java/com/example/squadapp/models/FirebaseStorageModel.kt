@@ -13,21 +13,12 @@ class FirebaseStorageModel {
     private val storageRef = storage.reference
 
     companion object {
-        // Folder paths for different image types
         const val PROFILE_PICTURES_FOLDER = "profile_pictures"
         const val POST_PICTURES_FOLDER = "post_pictures"
 
         private const val TAG = "FirebaseStorageModel"
     }
 
-    /**
-     * Upload a picture to Firebase Storage
-     * @param imageUri The local URI of the image to upload
-     * @param folderPath The folder path where the image should be stored (use constants from companion)
-     * @param fileName The name to give the file in storage
-     * @param completion Callback with success status, download URL (if successful), and message
-     * @param onProgress Optional callback for upload progress (0-100)
-     */
     fun uploadPicture(
         imageUri: Uri,
         folderPath: String,
@@ -36,19 +27,14 @@ class FirebaseStorageModel {
         onProgress: ((Int) -> Unit)? = null
     ) {
         val imageRef: StorageReference = storageRef.child("$folderPath/$fileName")
-
         val uploadTask = imageRef.putFile(imageUri)
 
-        // Track upload progress
         uploadTask.addOnProgressListener { taskSnapshot ->
             val progress = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount).toInt()
-            Log.d(TAG, "Upload progress: $progress%")
             onProgress?.invoke(progress)
-        }.addOnSuccessListener { taskSnapshot ->
-            // Get download URL
+        }.addOnSuccessListener {
             imageRef.downloadUrl.addOnSuccessListener { downloadUri ->
                 val downloadUrl = downloadUri.toString()
-                Log.d(TAG, "Image uploaded successfully to: $downloadUrl")
                 completion(true, downloadUrl, "Image uploaded successfully")
             }.addOnFailureListener { exception ->
                 val errorMessage = "Failed to get download URL: ${exception.message}"
@@ -62,13 +48,6 @@ class FirebaseStorageModel {
         }
     }
 
-    /**
-     * Upload a profile picture
-     * @param imageUri The local URI of the image to upload
-     * @param userId The user's ID to create a unique filename
-     * @param completion Callback with success status, download URL (if successful), and message
-     * @param onProgress Optional callback for upload progress (0-100)
-     */
     fun uploadProfilePicture(
         imageUri: Uri,
         userId: String,
@@ -79,13 +58,6 @@ class FirebaseStorageModel {
         uploadPicture(imageUri, PROFILE_PICTURES_FOLDER, fileName, completion, onProgress)
     }
 
-    /**
-     * Upload a post picture
-     * @param imageUri The local URI of the image to upload
-     * @param postId The post's ID to create a unique filename
-     * @param completion Callback with success status, download URL (if successful), and message
-     * @param onProgress Optional callback for upload progress (0-100)
-     */
     fun uploadPostPicture(
         imageUri: Uri,
         postId: String,
@@ -96,11 +68,6 @@ class FirebaseStorageModel {
         uploadPicture(imageUri, POST_PICTURES_FOLDER, fileName, completion, onProgress)
     }
 
-    /**
-     * Delete a picture from Firebase Storage
-     * @param downloadUrl The download URL of the image to delete
-     * @param completion Callback with success status and message
-     */
     fun deletePicture(
         downloadUrl: String,
         completion: ResultCompletion
@@ -109,7 +76,6 @@ class FirebaseStorageModel {
             val imageRef = storage.getReferenceFromUrl(downloadUrl)
             imageRef.delete()
                 .addOnSuccessListener {
-                    Log.d(TAG, "Image deleted successfully: $downloadUrl")
                     completion(true, "Image deleted successfully")
                 }
                 .addOnFailureListener { exception ->
@@ -122,31 +88,6 @@ class FirebaseStorageModel {
             Log.e(TAG, errorMessage)
             completion(false, errorMessage)
         }
-    }
-
-    /**
-     * Get a reference to a specific folder in storage
-     * @param folderPath The folder path
-     * @return StorageReference for the folder
-     */
-    fun getFolderReference(folderPath: String): StorageReference {
-        return storageRef.child(folderPath)
-    }
-
-    /**
-     * Get a reference to profile pictures folder
-     * @return StorageReference for profile pictures folder
-     */
-    fun getProfilePicturesFolder(): StorageReference {
-        return getFolderReference(PROFILE_PICTURES_FOLDER)
-    }
-
-    /**
-     * Get a reference to post pictures folder
-     * @return StorageReference for post pictures folder
-     */
-    fun getPostPicturesFolder(): StorageReference {
-        return getFolderReference(POST_PICTURES_FOLDER)
     }
 }
 

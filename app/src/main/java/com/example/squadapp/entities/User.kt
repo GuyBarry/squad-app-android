@@ -3,16 +3,11 @@ package com.example.squadapp.entities
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
-/**
- * User - Main user entity for application layer
- * Does NOT contain password - safe for passing between activities and UI operations
- * This is the primary user type used throughout the app
- * Implements Parcelable to be passed via Intent
- */
+
 @Parcelize
 data class User(
     val id: String,
-    val profileImage: String,  // profile image URL from Firebase Storage
+    val profileImage: String,
     val username: String,
     val email: String,
     val discordTag: String
@@ -20,16 +15,12 @@ data class User(
     companion object {
         const val EXTRA_USER = "extra_user"
 
-        // Firestore field keys
         const val USER_ID = "id"
         const val USER_PROFILE_IMAGE = "profileImage"
         const val USER_USERNAME = "username"
         const val USER_EMAIL = "email"
         const val USER_DISCORD_TAG = "discordTag"
 
-        /**
-         * Creates a User from a map of Firestore document fields
-         */
         fun deserializeUser(data: Map<String, Any?>): User {
             return User(
                 id = data[USER_ID] as? String ?: "",
