@@ -21,8 +21,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.squadapp.utils.CameraUtils
 import com.example.squadapp.utils.GalleryUtils
-import com.example.squadapp.utils.GameUiUtils.mapRawgGamesToUiGames
-import com.example.squadapp.utils.GameUiUtils.toRawgGame
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import android.widget.ImageView
@@ -140,7 +138,7 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
 
     private fun setupGamesList() {
         gameListAdapter = GameListAdapter(displayedGames) { game ->
-            editPostViewModel.selectedGame = game.toRawgGame()
+            editPostViewModel.selectedGame = game
             editPostViewModel.inputChangeCounter = 0
             gameSearchInput.setText(game.name, TextView.BufferType.EDITABLE)
         }
@@ -209,8 +207,8 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
             contentView.visibility = if (isLoading) View.GONE else View.VISIBLE
         }
 
-        editPostViewModel.games.observe(viewLifecycleOwner) { rawgGames ->
-            updateDisplayedGames(mapRawgGamesToUiGames(rawgGames))
+        editPostViewModel.games.observe(viewLifecycleOwner) { games ->
+            updateDisplayedGames(games)
         }
 
         editPostViewModel.isPublishing.observe(viewLifecycleOwner) { isPublishing ->
@@ -279,19 +277,11 @@ class EditPostFragment : Fragment(R.layout.fragment_edit_post) {
     // ── Games list helpers ────────────────────────────────────────────────────
 
     /** Replaces the games list with just the already-selected game. */
-    private fun replaceDisplayedGamesWithSelected(selectedGame: com.example.squadapp.entities.RawgGame) {
+    private fun replaceDisplayedGamesWithSelected(selectedGame: Game) {
         val oldSize = displayedGames.size
         displayedGames.clear()
         if (oldSize > 0) gameListAdapter.notifyItemRangeRemoved(0, oldSize)
-        displayedGames.add(
-            Game(
-                name = selectedGame.name,
-                platforms = selectedGame.platforms?.mapNotNull { it.platform?.name } ?: emptyList(),
-                imageResId = android.R.drawable.ic_menu_gallery,
-                id = selectedGame.id,
-                imageUrl = selectedGame.backgroundImage
-            )
-        )
+        displayedGames.add(selectedGame)
         gameListAdapter.notifyItemInserted(0)
     }
 

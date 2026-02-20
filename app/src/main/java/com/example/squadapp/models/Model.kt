@@ -1,13 +1,15 @@
 package com.example.squadapp.models
 
 import android.net.Uri
+import Game
 import com.example.squadapp.base.AuthCompletion
 import com.example.squadapp.api.RawgApiClient
+import com.example.squadapp.base.GameCompletion
+import com.example.squadapp.base.GamesCompletion
 import com.example.squadapp.base.PostsCompletion
-import com.example.squadapp.base.RawgGameCompletion
-import com.example.squadapp.base.RawgGamesCompletion
 import com.example.squadapp.base.ResultCompletion
 import com.example.squadapp.base.UploadPictureCompletion
+import com.example.squadapp.entities.GameEntity
 import com.example.squadapp.entities.NewPost
 import com.example.squadapp.entities.NewUser
 import com.example.squadapp.entities.User
@@ -73,12 +75,39 @@ class Model private constructor() {
         }
     }
 
-    fun searchGames(gameName: String, completion: RawgGamesCompletion) {
+    fun searchGames(gameName: String, completion: GamesCompletion) {
         rawgApiClient.searchGamesByName(gameName, completion)
     }
 
-    fun searchGameById(gameId: Int, completion: RawgGameCompletion) {
-        rawgApiClient.searchGameById(gameId, completion)
+    fun searchGameById(gameId: Int, completion: GameCompletion) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val cached = roomLocalModel.getGame(gameId)
+            if (cached != null) {
+                val game = Game(
+                    id = cached.id,
+                    name = cached.name,
+                    platforms = cached.platforms.split(",").filter { it.isNotBlank() },
+                    imageResId = android.R.drawable.ic_menu_gallery,
+                    imageUrl = null,
+                    rating = cached.rating
+                )
+                CoroutineScope(Dispatchers.Main).launch { completion(game) }
+                return@launch
+            }
+
+            rawgApiClient.searchGameById(gameId) { fetchedGame: Game? ->
+                if (fetchedGame != null) {
+                    val entity = GameEntity(
+                        id = fetchedGame.id,
+                        name = fetchedGame.name,
+                        rating = 0.0,
+                        platforms = fetchedGame.platforms.joinToString(",")
+                    )
+                    CoroutineScope(Dispatchers.IO).launch { roomLocalModel.saveGame(entity) }
+                }
+                completion(fetchedGame)
+            }
+        }
     }
 
     fun deletePost(postId: String, imageUrl: String, completion: ResultCompletion) {

@@ -1,8 +1,10 @@
 package com.example.squadapp.models
 
 import com.example.squadapp.SquadApplication
+import com.example.squadapp.dao.GameDao
 import com.example.squadapp.dao.PostDao
 import com.example.squadapp.dao.UserDao
+import com.example.squadapp.entities.GameEntity
 import com.example.squadapp.entities.NewPost
 import com.example.squadapp.entities.Post
 import com.example.squadapp.entities.PostEntity
@@ -12,6 +14,7 @@ class RoomLocalModel {
 
     private val userDao: UserDao = SquadApplication.instance.database.userDao()
     private val postDao: PostDao = SquadApplication.instance.database.postDao()
+    private val gameDao: GameDao = SquadApplication.instance.database.gameDao()
 
     suspend fun saveUser(user: User) {
         userDao.insertUser(user)
@@ -69,6 +72,14 @@ class RoomLocalModel {
 
     suspend fun clearAllUsers() {
         userDao.deleteAllUsers()
+    }
+
+    suspend fun getGame(gameId: Int): GameEntity? {
+        return gameDao.getGameById(gameId)
+    }
+
+    suspend fun saveGame(game: GameEntity) {
+        gameDao.insertGame(game)
     }
 }
 

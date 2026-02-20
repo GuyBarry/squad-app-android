@@ -1,18 +1,18 @@
 package com.example.squadapp
 
+import Game
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.squadapp.entities.Post
-import com.example.squadapp.entities.RawgGame
 import com.example.squadapp.models.Model
 
 class EditPostViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _games = MutableLiveData<List<RawgGame>>()
-    val games: LiveData<List<RawgGame>> = _games
+    private val _games = MutableLiveData<List<Game>>()
+    val games: LiveData<List<Game>> = _games
 
     private val _isPublishing = MutableLiveData<Boolean>(false)
     val isPublishing: LiveData<Boolean> = _isPublishing
@@ -28,14 +28,14 @@ class EditPostViewModel(application: Application) : AndroidViewModel(application
     private val _isLoadingData = MutableLiveData(true)
     val isLoadingData: LiveData<Boolean> = _isLoadingData
 
-    var selectedGame: RawgGame? = null
+    var selectedGame: Game? = null
     var inputChangeCounter = 0
 
     fun loadPostData(gameId: Int) {
         _isLoadingData.value = true
-        Model.shared.searchGameById(gameId) { rawgGame ->
-            if (rawgGame != null) {
-                selectedGame = rawgGame
+        Model.shared.searchGameById(gameId) { game ->
+            if (game != null) {
+                selectedGame = game
                 inputChangeCounter = 0
             }
             _isLoadingData.postValue(false)
@@ -43,8 +43,8 @@ class EditPostViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun searchGames(query: String) {
-        Model.shared.searchGames(query) { rawgGames ->
-            _games.postValue(rawgGames.take(4))
+        Model.shared.searchGames(query) { games ->
+            _games.postValue(games.take(4))
         }
     }
 
