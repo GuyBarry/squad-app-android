@@ -123,30 +123,5 @@ class FirebaseStorageModel {
             completion(false, errorMessage)
         }
     }
-
-    /**
-     * Get a reference to a specific folder in storage
-     * @param folderPath The folder path
-     * @return StorageReference for the folder
-     */
-    fun getFolderReference(folderPath: String): StorageReference {
-        return storageRef.child(folderPath)
-    }
-
-    /**
-     * Get a reference to profile pictures folder
-     * @return StorageReference for profile pictures folder
-     */
-    fun getProfilePicturesFolder(): StorageReference {
-        return getFolderReference(PROFILE_PICTURES_FOLDER)
-    }
-
-    /**
-     * Get a reference to post pictures folder
-     * @return StorageReference for post pictures folder
-     */
-    fun getPostPicturesFolder(): StorageReference {
-        return getFolderReference(POST_PICTURES_FOLDER)
-    }
 }
 
