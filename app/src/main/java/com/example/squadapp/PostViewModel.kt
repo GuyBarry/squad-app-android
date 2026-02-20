@@ -1,18 +1,19 @@
 package com.example.squadapp
 
+import Game
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.squadapp.entities.NewPost
-import com.example.squadapp.entities.RawgGame
+import com.example.squadapp.entities.User
 import com.example.squadapp.models.Model
 import java.util.Date
 
 class PostViewModel : ViewModel() {
 
-    private val _games = MutableLiveData<List<RawgGame>>()
-    val games: LiveData<List<RawgGame>> = _games
+    private val _games = MutableLiveData<List<Game>>()
+    val games: LiveData<List<Game>> = _games
 
     private val _isPublishing = MutableLiveData<Boolean>(false)
     val isPublishing: LiveData<Boolean> = _isPublishing
@@ -24,12 +25,12 @@ class PostViewModel : ViewModel() {
     private val _publishResult = MutableLiveData<Pair<Boolean, String>>()
     val publishResult: LiveData<Pair<Boolean, String>> = _publishResult
 
-    var selectedGame: RawgGame? = null
+    var selectedGame: Game? = null
     var inputChangeCounter = 0
 
     fun searchGames(query: String) {
-        Model.shared.searchGames(query) { rawgGames ->
-            _games.postValue(rawgGames.take(4))
+        Model.shared.searchGames(query) { games ->
+            _games.postValue(games.take(4))
         }
     }
 
@@ -39,14 +40,14 @@ class PostViewModel : ViewModel() {
 
     fun publishPost(
         imageUri: Uri,
-        userId: String,
+        user: User,
         description: String
     ) {
         val game = selectedGame ?: return
         _isPublishing.value = true
         _publishProgress.value = null
 
-        val tempPostId = "${userId}_${System.currentTimeMillis()}"
+        val tempPostId = "${user.id}_${System.currentTimeMillis()}"
 
         Model.shared.uploadPostPicture(
             imageUri,
@@ -55,7 +56,7 @@ class PostViewModel : ViewModel() {
                 if (success && downloadUrl != null) {
                     val newPost = NewPost(
                         image = downloadUrl,
-                        userId = userId,
+                        userId = user.id,
                         description = description,
                         creationTime = Date(System.currentTimeMillis()),
                         gameId = game.id

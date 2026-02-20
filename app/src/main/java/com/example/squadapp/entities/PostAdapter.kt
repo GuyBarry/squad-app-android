@@ -85,17 +85,17 @@ class PostAdapter(
             postTime.text = TimeUtils.getTimeAgoString(post.creationTime)
             postText.text = post.description
 
-            Model.shared.searchGameById(post.gameId) { rawgGame ->
-                if (rawgGame != null) {
-                    gameName.text = rawgGame.name
+            Model.shared.searchGameById(post.gameId) { game ->
+                if (game != null) {
+                    gameName.text = game.name
 
-                    if (rawgGame.rating != null && rawgGame.rating > 0) {
-                        gameRating.text = String.format(Locale.US, itemView.context.getString(R.string.game_rating_format), rawgGame.rating)
+                    if (game.rating > 0) {
+                        gameRating.text = String.format(Locale.US, itemView.context.getString(R.string.game_rating_format), game.rating)
                     } else {
                         gameRating.text = ""
                     }
 
-                    val platforms = rawgGame.platforms?.mapNotNull { it.platform?.name } ?: emptyList()
+                    val platforms = game.platforms
                     if (platforms.isNotEmpty()) {
                         gamePlatforms.text = platforms.joinToString(", ")
                     } else {

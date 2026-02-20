@@ -18,8 +18,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.squadapp.utils.CameraUtils
 import com.example.squadapp.utils.GalleryUtils
-import com.example.squadapp.utils.GameUiUtils.mapRawgGamesToUiGames
-import com.example.squadapp.utils.GameUiUtils.toRawgGame
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import android.widget.ImageView
@@ -124,7 +122,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
 
     private fun setupGamesList() {
         gameListAdapter = GameListAdapter(displayedGames) { game ->
-            postViewModel.selectedGame = game.toRawgGame()
+            postViewModel.selectedGame = game
             postViewModel.inputChangeCounter = 0
             gameSearchInput.setText(game.name, TextView.BufferType.EDITABLE)
         }
@@ -138,7 +136,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 postViewModel.inputChangeCounter++
-                val selectedGame = postViewModel.selectedGame
+                val selectedGame: Game? = postViewModel.selectedGame
 
                 if (s != null && selectedGame != null && s.toString() == selectedGame.name) {
                     replaceDisplayedGamesWithSelected(selectedGame)
@@ -162,8 +160,8 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     // ── ViewModel observers ───────────────────────────────────────────────────
 
     private fun observeViewModel() {
-        postViewModel.games.observe(viewLifecycleOwner) { rawgGames ->
-            updateDisplayedGames(mapRawgGamesToUiGames(rawgGames))
+        postViewModel.games.observe(viewLifecycleOwner) { games ->
+            updateDisplayedGames(games)
         }
 
         postViewModel.isPublishing.observe(viewLifecycleOwner) { isPublishing ->
@@ -227,19 +225,11 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     // ── Games list helpers ────────────────────────────────────────────────────
 
     /** Replaces the games list with just the already-selected game. */
-    private fun replaceDisplayedGamesWithSelected(selectedGame: com.example.squadapp.entities.RawgGame) {
+    private fun replaceDisplayedGamesWithSelected(selectedGame: Game) {
         val oldSize = displayedGames.size
         displayedGames.clear()
         if (oldSize > 0) gameListAdapter.notifyItemRangeRemoved(0, oldSize)
-        displayedGames.add(
-            Game(
-                name = selectedGame.name,
-                platforms = selectedGame.platforms?.mapNotNull { it.platform?.name } ?: emptyList(),
-                imageResId = android.R.drawable.ic_menu_gallery,
-                id = selectedGame.id,
-                imageUrl = selectedGame.backgroundImage
-            )
-        )
+        displayedGames.add(selectedGame)
         gameListAdapter.notifyItemInserted(0)
     }
 
@@ -280,7 +270,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             return
         }
 
-        postViewModel.publishPost(selectedImageUri!!, args.user.id, description)
+        postViewModel.publishPost(selectedImageUri!!, args.user, description)
     }
 
     private fun navigateToHome() {

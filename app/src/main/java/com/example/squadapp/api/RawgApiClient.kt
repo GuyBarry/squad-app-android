@@ -2,10 +2,11 @@ package com.example.squadapp.api
 
 import android.util.Log
 import com.example.squadapp.BuildConfig
-import com.example.squadapp.base.RawgGameCompletion
-import com.example.squadapp.base.RawgGamesCompletion
+import com.example.squadapp.base.GameCompletion
+import com.example.squadapp.base.GamesCompletion
 import com.example.squadapp.entities.RawgGame
 import com.example.squadapp.entities.RawgGamesResponse
+import com.example.squadapp.utils.GameUtils
 import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Callback
@@ -43,7 +44,7 @@ class RawgApiClient {
 
     fun searchGamesByName(
         gameName: String,
-        onSuccess: RawgGamesCompletion
+        onSuccess: GamesCompletion
     ) {
         val call = apiService.searchGames(
             apiKey = API_KEY,
@@ -56,7 +57,7 @@ class RawgApiClient {
                 if (response.isSuccessful) {
                     val gameResponse = response.body()
                     if (gameResponse != null) {
-                        onSuccess(gameResponse.results)
+                        onSuccess(GameUtils.mapRawgGamesToUiGames(gameResponse.results))
                     } else {
                         Log.e(TAG, "Response body is null")
                     }
@@ -73,7 +74,7 @@ class RawgApiClient {
 
     fun searchGameById(
         gameId: Int,
-        onSuccess: RawgGameCompletion
+        onSuccess: GameCompletion
     ) {
         val call = apiService.getGameById(
             gameId = gameId,
@@ -85,7 +86,7 @@ class RawgApiClient {
                 if (response.isSuccessful) {
                     val game = response.body()
                     if (game != null) {
-                        onSuccess(game)
+                        onSuccess(with(GameUtils) { game.toGame() })
                     } else {
                         Log.e(TAG, "Response body is null for game ID: $gameId")
                         onSuccess(null)
