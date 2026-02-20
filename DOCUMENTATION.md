@@ -32,16 +32,18 @@
 | Target SDK | 36 |
 | Language | Kotlin |
 | Build System | Gradle (KTS) |
-| Architecture | **MVVM** + Repository (`Model` singleton) |
+| Architecture | **MVVM** + Repository (`Model` singleton) + **Room offline-first cache** |
 
 ### Package Structure
 
 ```
 com.example.squadapp/
 ├── api/                   # Retrofit client & service interface (RAWG)
-├── base/                  # Kotlin typealias completion callbacks, constants
-├── entities/              # Data classes + RecyclerView adapters
-├── models/                # Firebase wrappers (Model, FirebaseAuthModel, FirebaseModel, FirebaseStorageModel)
+├── base/                  # Kotlin typealias completion callbacks (Constants.kt)
+├── dao/                   # Room DAO interfaces (PostDao, UserDao, GameDao)
+├── database/              # AppDatabase – Room database singleton
+├── entities/              # Data classes + Room @Entity classes + RecyclerView adapters
+├── models/                # Firebase wrappers + RoomLocalModel (Model, FirebaseAuthModel, FirebaseModel, FirebaseStorageModel, RoomLocalModel)
 ├── utils/                 # Camera, Gallery, Game UI, Spannable, Time utilities
 ├── AuthActivity.kt        # Auth entry point
 ├── AuthViewModel.kt
@@ -52,7 +54,8 @@ com.example.squadapp/
 ├── EditPostFragment.kt / EditPostViewModel.kt
 ├── EditProfileFragment.kt / EditProfileViewModel.kt
 ├── SignInFragment.kt / SignInViewModel.kt
-└── SignUpFragment.kt / SignUpViewModel.kt
+├── SignUpFragment.kt / SignUpViewModel.kt
+└── SquadApplication.kt    # Custom Application subclass – initialises the Room database
 ```
 
 ---
@@ -90,7 +93,7 @@ An **Activity** is a single, focused screen that the user can interact with. Eve
 |---|---|
 | `onCreateView` | All fragments — inflates the XML layout |
 | `onViewCreated` | All fragments — binds views, sets up listeners, starts observing LiveData |
-| `onResume` | `HomeFragment`, `ProfileFragment` — reloads posts so the list is always fresh |
+| `onResume` | `HomeFragment`, `ProfileFragment` — reloads posts from the local Room cache so the list is always fresh |
 
 ---
 
@@ -178,7 +181,7 @@ A `RecyclerView` is an efficient, flexible list/grid widget. Instead of creating
   - Post image → loaded with **Glide** (with a `ProgressBar` shown while loading).
   - User's profile image → Glide with `circleCrop()`.
   - Username, discord tag, relative time (`TimeUtils`), description.
-  - Game name, rating, and platforms fetched live from `Model.shared.searchGameById(...)` inside `onBindViewHolder`.
+  - Game name, rating, and platforms fetched via `Model.shared.searchGameById(...)` inside `onBindViewHolder` (checks the Room game cache first, then falls back to the RAWG API).
   - Edit / Delete buttons (conditionally shown based on whether callbacks are provided by the hosting fragment — on `ProfileFragment` the user sees edit and delete; on `HomeFragment` they do not).
   - Copy Discord button — uses `ClipboardManager` to copy the discord tag.
 - `LinearLayoutManager` (vertical) is set in both `HomeFragment` and `ProfileFragment`.
@@ -193,7 +196,7 @@ A `RecyclerView` is an efficient, flexible list/grid widget. Instead of creating
 - `LinearLayoutManager` (vertical) is set in both fragments.
 
 ### SwipeRefreshLayout
-`HomeFragment` wraps its `RecyclerView` in a `SwipeRefreshLayout`. When the user pulls down, `homeViewModel.loadPosts()` is called again, and `swipeRefreshLayout.isRefreshing` is controlled by the `isLoading` LiveData observation so the spinner auto-hides.
+`HomeFragment` wraps its `RecyclerView` in a `SwipeRefreshLayout`. When the user pulls down, `homeViewModel.refreshPosts()` is called — this bypasses the Room cache and fetches fresh data directly from Firestore, then updates the cache. The `swipeRefreshLayout.isRefreshing` spinner is controlled by the `isLoading` LiveData so it auto-hides when the fetch completes.
 
 ---
 
@@ -270,17 +273,85 @@ AlertDialog.Builder(requireContext())
 - Integrate natively with **LiveData** and **Kotlin Coroutines / Flow**.
 
 ### Room in this project
-Room is declared as a dependency in `app/build.gradle.kts`:
+Room is **fully implemented** as the offline cache layer for posts, users, and game metadata. It is the primary data source for reads; Firebase Firestore is the source of truth and is used for writes and explicit refreshes.
+
+#### `AppDatabase` (`database/AppDatabase.kt`)
+The Room database singleton, implemented as a thread-safe `companion object` with double-checked locking. It references all three entities and exposes the three DAOs:
 ```kotlin
-implementation(libs.androidx.room.runtime)
-implementation(libs.androidx.room.ktx)
-kapt(libs.androidx.room.compiler)   // annotation processor that generates the DB implementation
+@Database(
+    entities = [User::class, PostEntity::class, GameEntity::class],
+    version = 2,
+    exportSchema = false
+)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun userDao(): UserDao
+    abstract fun postDao(): PostDao
+    abstract fun gameDao(): GameDao
+}
+```
+The database file is named `squad_app_database`. `fallbackToDestructiveMigration(true)` is set for development convenience.
+
+#### `SquadApplication` (`SquadApplication.kt`)
+A custom `Application` subclass registered in `AndroidManifest.xml`. It initialises the `AppDatabase` instance lazily and exposes it as a global singleton so `RoomLocalModel` can access it without needing a `Context` parameter at every call site:
+```kotlin
+class SquadApplication : Application() {
+    val database: AppDatabase by lazy { AppDatabase.getDatabase(this) }
+    companion object {
+        lateinit var instance: SquadApplication
+            private set
+    }
+    override fun onCreate() { super.onCreate(); instance = this }
+}
 ```
 
-> **Note:** In the current version of SquadApp, Room is included as a **dependency** and is ready to be used as an offline cache layer for posts and user data. The primary source of truth remains Firebase Firestore (see §8). A typical integration pattern would be:
-> - `@Entity data class PostEntity(...)` mirrors the `Post` data class with a Room `@PrimaryKey`.
-> - A `@Dao` interface exposes `getAllPosts(): LiveData<List<PostEntity>>` and `insertAll(posts)`.
-> - The `Model` singleton would check the local Room DB first, then sync with Firestore in the background — the classic **offline-first** pattern.
+#### Entities (Room tables)
+
+| Entity class | Table | Key fields |
+|---|---|---|
+| `User` (`entities/User.kt`) | `users` | `id` (PK), `username`, `email`, `profileImage`, `discordTag` |
+| `PostEntity` (`entities/PostEntity.kt`) | `posts` | `id` (PK), `image`, `userId` (FK → `users.id`), `description`, `creationTime` (Long epoch ms), `gameId` |
+| `GameEntity` (`entities/GameEntity.kt`) | `games` | `id` (PK, Int), `name`, `rating` (Double), `platforms` (comma-separated String) |
+
+`PostEntity` declares a **foreign key** to `User` with `onDelete = CASCADE` and an index on `userId`. The companion `PostEntity.fromPost(post)` factory converts the domain `Post` object for storage.
+
+`PostWithUser` (`entities/PostWithUser.kt`) is a Room **relation** class that uses `@Embedded` + `@Relation` to join `PostEntity` with its `User` in a single query. Its `toPost()` method converts it back to the domain `Post` object.
+
+#### DAOs (`dao/`)
+
+| DAO | Interface | Key operations |
+|---|---|---|
+| `PostDao` | `dao/PostDao.kt` | `insertPosts`, `getAllPostsWithUsers` (`@Transaction`), `getPostsByUserWithUser` (`@Transaction`), `getPostById`, `deletePost`, `deleteAllPosts` |
+| `UserDao` | `dao/UserDao.kt` | `insertUser`, `insertUsers`, `updateUser`, `getUserById`, `deleteAllUsers` |
+| `GameDao` | `dao/GameDao.kt` | `insertGame`, `getGameById` |
+
+All DAO methods are `suspend` functions, executed on coroutine-managed threads.
+
+#### `RoomLocalModel` (`models/RoomLocalModel.kt`)
+Wraps all DAO calls and provides the bridge between the domain layer and Room:
+
+| Method | Description |
+|---|---|
+| `saveUser(user)` | Inserts or replaces a single `User`. |
+| `updateUser(user)` | Updates an existing `User` record. |
+| `savePosts(posts)` | Extracts unique users from the list, inserts them, then inserts `PostEntity` rows. |
+| `savePost(newPost, postId)` | Inserts a single new post after it has been written to Firestore. |
+| `getAllPosts()` | Returns all posts (with embedded users) sorted by `creationTime` descending. |
+| `getPostsByUser(userId)` | Returns posts for a specific user. |
+| `deletePost(postId)` | Deletes a single post row. |
+| `updatePost(postId, updates)` | Applies a partial-update map (description, imageUrl, gameId) to an existing `PostEntity`. |
+| `clearAllPosts()` | Deletes all rows from `posts`. |
+| `clearAllUsers()` | Deletes all rows from `users`. |
+| `getGame(gameId)` | Returns a cached `GameEntity` or `null` if not yet cached. |
+| `saveGame(game)` | Inserts or replaces a `GameEntity`. |
+
+### Offline-first data flow
+The `Model` singleton coordinates Firebase and Room to implement an **offline-first** pattern:
+
+1. **Read (fast path):** `Model.shared.getAllPosts` → reads directly from `RoomLocalModel` → instant local result.
+2. **Refresh (network path):** `Model.shared.refreshPosts` → fetches all posts from Firestore → clears the Room `posts` table → saves fresh data → returns to UI.
+3. **Write:** `addPost`, `deletePost`, `updatePost` write to Firestore first; on success they mirror the change into Room.
+4. **Game cache:** `searchGameById` checks `GameDao` first; on a cache miss it calls the RAWG API and stores the result in `GameEntity` for future hits.
+5. **Sign-out:** `Model.shared.signOut` calls `clearAllPosts()` and `clearAllUsers()` to wipe cached data for the next user.
 
 ---
 
@@ -292,11 +363,11 @@ All Firebase interactions are encapsulated in the `models/` package. The public 
 **What it is:** Firebase Auth manages user identity. It handles email/password account creation, sign-in, and session persistence (a token is stored on-device automatically).
 
 **Used for:**
-- `signUpUser(password, newUser, completion)` — validates uniqueness of username and email in Firestore first, then calls `auth.createUserWithEmailAndPassword(...)`. On success writes the user profile to Firestore. If Firestore write fails it rolls back the Auth account with `user.delete()`.
-- `signInUser(email, password, completion)` — calls `auth.signInWithEmailAndPassword(...)` then fetches the Firestore profile.
+- `signUpUser(password, newUser, completion)` — validates uniqueness of username and email in Firestore first, then calls `auth.createUserWithEmailAndPassword(...)`. On success writes the user profile to Firestore. If Firestore write fails it rolls back the Auth account with `user.delete()`. The `Model` layer also saves the new user to Room on success.
+- `signInUser(email, password, completion)` — calls `auth.signInWithEmailAndPassword(...)` then fetches the Firestore profile. The `Model` layer saves the user to Room on success.
 - `getCurrentUser(completion)` — called on app launch in `AuthActivity`. Checks `auth.currentUser` (persisted token). If a UID is found, fetches the full profile from Firestore.
-- `updateUser(...)` — updates username, discord tag, and optionally a new profile image URL in Firestore.
-- `signOut()` — calls `auth.signOut()`.
+- `updateUser(...)` — updates username, discord tag, and optionally a new profile image URL in Firestore. The `Model` layer mirrors the change to Room on success.
+- `signOut()` — calls `auth.signOut()`. The `Model` layer clears the Room cache.
 
 **Where it's triggered from:**
 - `AuthActivity.onCreate` → `Model.shared.getCurrentUser`
@@ -315,13 +386,13 @@ All Firebase interactions are encapsulated in the `models/` package. The public 
 | `posts` | `image`, `user` (userId), `description`, `creationTime`, `gameId` | Posts |
 
 **Operations:**
-- `getAllPosts` — fetches all documents from `posts`, then batch-fetches the corresponding `users` documents using `whereIn`. Joins them in memory and sorts by `creationTime` descending.
+- `getAllPosts` — fetches all documents from `posts`, then batch-fetches the corresponding `users` documents using `whereIn`. Joins them in memory and sorts by `creationTime` descending. Called only by `Model.refreshPosts`.
 - `getPostsByUser(userId)` — queries `posts` with `.whereEqualTo("user", userId)`.
 - `addPost(newPost)` — adds a document to `posts` using `db.collection(POSTS).add(...)`.
 - `deletePost(postId)` — deletes a document by ID.
 - `updatePost(postId, updates)` — partial update using `document.update(updates)`.
 
-**Where it's triggered from:** `HomeViewModel`, `PostViewModel`, `ProfileViewModel`, `EditPostViewModel` — all through `Model.shared`.
+**Where it's triggered from:** `Model.shared` (which is called by `HomeViewModel`, `PostViewModel`, `ProfileViewModel`, `EditPostViewModel`).
 
 ### Firebase Storage (`FirebaseStorageModel.kt`)
 **What it is:** Firebase Storage stores binary files (images, videos). Files are referenced by a path, and a **download URL** (HTTPS) is stored in Firestore for retrieval.
@@ -352,11 +423,11 @@ Every screen in SquadApp has a dedicated `ViewModel`:
 | `AuthViewModel` | `AuthActivity` (`by viewModels()`) | Holds a `MutableSharedFlow<User>` that fires once on successful auth, driving the `AuthActivity → MainActivity` transition. Shared with child fragments via `activityViewModels()`. |
 | `SignInViewModel` | `SignInFragment` | Calls `Model.shared.signInUser`, exposes `isSigningIn: LiveData<Boolean>` and `signInResult: LiveData<Pair<Boolean,String>>`. |
 | `SignUpViewModel` | `SignUpFragment` | Same pattern for sign-up. |
-| `HomeViewModel` | `HomeFragment` | Calls `Model.shared.getAllPosts`, exposes `posts: LiveData<List<Post>>` and `isLoading: LiveData<Boolean>`. |
+| `HomeViewModel` | `HomeFragment` | Exposes `posts: LiveData<List<Post>>` and `isLoading: LiveData<Boolean>`. Has two load methods: `loadPosts()` reads from the Room cache (fast, used on `onResume`); `refreshPosts()` fetches fresh data from Firestore and updates the cache (used on initial load and swipe-to-refresh). |
 | `PostViewModel` | `PostFragment` | Manages game search (`games: LiveData<List<RawgGame>>`), upload progress, and publish result. |
-| `ProfileViewModel` | `ProfileFragment` | Loads user posts, handles delete, sign-out. |
+| `ProfileViewModel` | `ProfileFragment` | Loads user posts from Room cache, handles delete (Firestore + Room), sign-out. Exposes `deleteResult: LiveData<Pair<Boolean,String>>`. |
 | `EditProfileViewModel` | `EditProfileFragment` | Extends `AndroidViewModel` (needs `Application` context for string resources). Manages image upload/delete and profile update. |
-| `EditPostViewModel` | `EditPostFragment` | Loads existing post game data, manages game search, update logic. |
+| `EditPostViewModel` | `EditPostFragment` | Loads existing post game data, manages game search, update logic (Firestore + Room). |
 
 ### LiveData
 **`LiveData`** is a lifecycle-aware observable data holder. Fragments observe it with `viewLifecycleOwner` to automatically stop receiving updates when the view is destroyed (preventing memory leaks and null-pointer crashes).
@@ -374,7 +445,7 @@ homeViewModel.posts.observe(viewLifecycleOwner) { posts ->
 Pattern used throughout:
 - Private `MutableLiveData` (`_posts`, `_isLoading`) is mutated inside the ViewModel.
 - Public `LiveData` property exposes a read-only view to the Fragment.
-- `.postValue(...)` is used from background threads (Firebase callbacks); `.value = ...` is used from the main thread.
+- `.postValue(...)` is used from background threads (Firebase / Room coroutine callbacks); `.value = ...` is used from the main thread.
 
 ### SharedFlow (AuthViewModel)
 `AuthViewModel` uses `MutableSharedFlow<User>` instead of `LiveData` for the one-shot navigation event. `SharedFlow` does not re-emit to late subscribers (unlike `LiveData`), which is important for navigation: if the Activity is recreated, it should not navigate again due to a replayed event.
@@ -410,7 +481,7 @@ Both fragments access the **activity-scoped** `AuthViewModel` via `activityViewM
 #### Main Fragments (inside `MainActivity`)
 | Fragment | Layout | Key Features |
 |---|---|---|
-| `HomeFragment` | `fragment_home.xml` | Displays all posts in a `RecyclerView` with pull-to-refresh. Reloads on `onResume`. |
+| `HomeFragment` | `fragment_home.xml` | Displays all posts in a `RecyclerView` with pull-to-refresh. On `onViewCreated` calls `refreshPosts()` (Firestore). On `onResume` calls `loadPosts()` (Room cache). |
 | `PostFragment` | `fragment_post.xml` | Create a new post: pick/take a photo, type a description, search and select a game. |
 | `ProfileFragment` | `fragment_profile.xml` | Shows the current user's info and their posts in a `RecyclerView`. Edit/delete post buttons. Logout. |
 | `EditProfileFragment` | `fragment_edit_profile.xml` | Edit username, discord tag, profile picture (gallery or camera). |
@@ -436,7 +507,7 @@ val user = args.user
 ```
 
 ### `onResume` reload pattern
-`HomeFragment` and `ProfileFragment` both call their ViewModel's load function from `onResume()`. This ensures data is refreshed whenever the user navigates back to these screens (e.g., after editing a post or creating a new one).
+`HomeFragment` and `ProfileFragment` both call their ViewModel's `loadPosts` / `loadUserPosts` function from `onResume()`. This reads from the local Room cache for a fast, low-latency update whenever the user navigates back to these screens (e.g., after editing a post or creating a new one). A network refresh is only triggered explicitly (swipe-to-refresh on `HomeFragment`, or after a write operation).
 
 ---
 
@@ -461,11 +532,19 @@ val user = args.user
 ┌───────────────────────────────────────────────────────────────────────┐
 │                       Repository (Model singleton)                    │
 │  Model.shared                                                         │
-│    ├── FirebaseAuthModel   (Firebase Authentication)                  │
-│    ├── FirebaseModel       (Cloud Firestore – posts & users)          │
-│    ├── FirebaseStorageModel(Firebase Storage – images)                │
-│    └── RawgApiClient       (RAWG REST API via Retrofit)               │
-└───────────────────────────────────────────────────────────────────────┘
+│    ├── FirebaseAuthModel      (Firebase Authentication)               │
+│    ├── FirebaseModel          (Cloud Firestore – posts & users)       │
+│    ├── FirebaseStorageModel   (Firebase Storage – images)             │
+│    ├── RoomLocalModel         (offline cache – posts, users, games)   │
+│    └── RawgApiClient          (RAWG REST API via Retrofit)            │
+└──────────┬────────────────────────────────┬───────────────────────────┘
+           │ reads/writes                   │ reads/writes
+           ▼                                ▼
+┌─────────────────────┐          ┌──────────────────────────┐
+│  Room (AppDatabase) │          │  Firebase / RAWG API      │
+│  users / posts /    │◄─ sync ──│  (source of truth)        │
+│  games tables       │          │                           │
+└─────────────────────┘          └──────────────────────────┘
 ```
 
 ---
@@ -479,7 +558,7 @@ val user = args.user
 | `firebase-auth` | – | User authentication |
 | `firebase-storage` | – | Image/file cloud storage |
 | **Jetpack Navigation** | `navigation.fragment.ktx` / `navigation.ui.ktx` | Fragment navigation, Safe Args |
-| **Room** | `room.runtime`, `room.ktx`, `room.compiler` | Local SQLite ORM |
+| **Room** | `room.runtime`, `room.ktx`, `room.compiler` | Local SQLite ORM – fully implemented as the offline cache (`AppDatabase`, `PostDao`, `UserDao`, `GameDao`, `RoomLocalModel`) |
 | **Lifecycle** | `lifecycle.viewmodel.ktx`, `lifecycle.livedata.ktx`, `lifecycle.runtime.ktx` | ViewModel, LiveData, lifecycleScope |
 | **Retrofit 2** | `retrofit`, `retrofit.converter.gson` | Type-safe REST client for RAWG API |
 | **OkHttp** | `okhttp`, `okhttp.logging.interceptor` | HTTP client used by Retrofit |
@@ -488,5 +567,4 @@ val user = args.user
 | **SwipeRefreshLayout** | `androidx.swiperefreshlayout` | Pull-to-refresh on `HomeFragment` |
 | **Kotlin Parcelize** | plugin `kotlin.parcelize` | `@Parcelize` annotation for `User` and `Post` to pass via Intents / Safe Args |
 | **Safe Args** | plugin `navigation.safeargs` | Generates type-safe navigation argument classes |
-| **Kotlin Coroutines** | via `lifecycle.runtime.ktx` | `lifecycleScope.launch`, `SharedFlow.collect` |
-
+| **Kotlin Coroutines** | via `lifecycle.runtime.ktx` | `lifecycleScope.launch`, `SharedFlow.collect`, coroutine-based Room DAOs |
