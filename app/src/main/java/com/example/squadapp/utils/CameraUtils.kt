@@ -34,11 +34,5 @@ object CameraUtils {
         Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
             putExtra(MediaStore.EXTRA_OUTPUT, outputUri)
         }
-
-    /**
-     * Builds a gallery picker [Intent].
-     */
-    fun buildGalleryIntent(): Intent =
-        Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
 }
 

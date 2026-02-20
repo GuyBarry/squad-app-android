@@ -18,6 +18,7 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.squadapp.utils.CameraUtils
+import com.example.squadapp.utils.GalleryUtils
 import com.example.squadapp.utils.GameUiUtils.mapRawgGamesToUiGames
 import com.example.squadapp.utils.GameUiUtils.toRawgGame
 import com.google.android.material.button.MaterialButton
@@ -46,16 +47,9 @@ class PostFragment : Fragment(R.layout.fragment_post) {
 
     // ── Activity-result launchers ─────────────────────────────────────────────
 
-    private val pickImageLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val uri = result.data?.data
-            if (uri != null) {
-                selectedImageUri = uri
-                showSelectedImage(uri)
-            }
-        }
+    private val pickImageLauncher = GalleryUtils.registerGalleryLauncher(this) { uri ->
+        selectedImageUri = uri
+        showSelectedImage(uri)
     }
 
     private val takePictureLauncher = registerForActivityResult(
@@ -205,7 +199,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
     }
 
     private fun openGallery() {
-        pickImageLauncher.launch(CameraUtils.buildGalleryIntent())
+        GalleryUtils.openGallery(pickImageLauncher)
     }
 
     private fun openCamera() {

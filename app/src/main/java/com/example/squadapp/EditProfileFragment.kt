@@ -1,7 +1,5 @@
 package com.example.squadapp
 
-import android.content.Context
-import android.view.inputmethod.InputMethodManager
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -18,6 +16,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import com.example.squadapp.utils.CameraUtils
+import com.example.squadapp.utils.GalleryUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
@@ -41,13 +40,11 @@ class EditProfileFragment : Fragment() {
 
     // ── Activity-result launchers ─────────────────────────────────────────────
 
-    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri != null) {
-            selectedImageUri = uri
-            isImageDeleted = false
-            loadProfileImageFromUri(uri)
-            showCancelImageButton()
-        }
+    private val galleryLauncher = GalleryUtils.registerGalleryLauncher(this) { uri ->
+        selectedImageUri = uri
+        isImageDeleted = false
+        loadProfileImageFromUri(uri)
+        showCancelImageButton()
     }
 
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -100,7 +97,7 @@ class EditProfileFragment : Fragment() {
     }
 
     private fun setupButtonListeners() {
-        galleryButton.setOnClickListener { galleryLauncher.launch("image/*") }
+        galleryButton.setOnClickListener { GalleryUtils.openGallery(galleryLauncher) }
         cameraButton.setOnClickListener { openCamera() }
         cancelImageButton.setOnClickListener { cancelImageChange() }
         deleteImageButton.setOnClickListener { deleteImageChange() }
