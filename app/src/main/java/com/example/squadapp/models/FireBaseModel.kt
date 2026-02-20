@@ -29,7 +29,6 @@ class FirebaseModel {
             val postDocuments = querySnapshot.documents
 
             if (postDocuments.isEmpty()) {
-                Log.d("FirebaseModel", "No posts found")
                 completion(emptyList())
                 return@addOnSuccessListener
             }
@@ -190,7 +189,6 @@ class FirebaseModel {
             val user = if (userId != null && usersMap.containsKey(userId)) {
                 usersMap[userId]!!
             } else {
-                Log.d("FirebaseModel", "Filtering out post $postId - user not found: $userId")
                 return@mapNotNull null
             }
 
@@ -210,7 +208,6 @@ class FirebaseModel {
 
         db.collection(POSTS).add(postData)
             .addOnSuccessListener {
-                Log.d("FirebaseModel", "Post added successfully with ID: ${it.id}")
                 completion(true, "Post published successfully!")
             }
             .addOnFailureListener { exception ->
@@ -222,7 +219,6 @@ class FirebaseModel {
     fun deletePost(postId: String, completion: ResultCompletion) {
         db.collection(POSTS).document(postId).delete()
             .addOnSuccessListener {
-                Log.d("FirebaseModel", "Post deleted successfully with ID: $postId")
                 completion(true, "Post deleted successfully!")
             }
             .addOnFailureListener { exception ->
@@ -234,7 +230,6 @@ class FirebaseModel {
     fun updatePost(postId: String, updates: Map<String, Any?>, completion: ResultCompletion) {
         db.collection(POSTS).document(postId).update(updates)
             .addOnSuccessListener {
-                Log.d("FirebaseModel", "Post updated successfully with ID: $postId")
                 completion(true, "Post updated successfully!")
             }
             .addOnFailureListener { exception ->

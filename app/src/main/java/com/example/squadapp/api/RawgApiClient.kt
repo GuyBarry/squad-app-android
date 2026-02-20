@@ -7,7 +7,6 @@ import com.example.squadapp.base.RawgGamesCompletion
 import com.example.squadapp.entities.RawgGame
 import com.example.squadapp.entities.RawgGamesResponse
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -22,13 +21,7 @@ class RawgApiClient {
         private const val TAG = "RawgApiClient"
 
         private val httpClient: OkHttpClient by lazy {
-            val logging = HttpLoggingInterceptor { message ->
-                Log.d(TAG, message)
-            }
-            logging.setLevel(HttpLoggingInterceptor.Level.BODY)
-
             OkHttpClient.Builder()
-                .addInterceptor(logging)
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
@@ -63,7 +56,6 @@ class RawgApiClient {
                 if (response.isSuccessful) {
                     val gameResponse = response.body()
                     if (gameResponse != null) {
-                        Log.d(TAG, "Search found ${gameResponse.results.size} games for: '$gameName'")
                         onSuccess(gameResponse.results)
                     } else {
                         Log.e(TAG, "Response body is null")
@@ -93,7 +85,6 @@ class RawgApiClient {
                 if (response.isSuccessful) {
                     val game = response.body()
                     if (game != null) {
-                        Log.d(TAG, "Found game: '${game.name}' (ID: $gameId)")
                         onSuccess(game)
                     } else {
                         Log.e(TAG, "Response body is null for game ID: $gameId")

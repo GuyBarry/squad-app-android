@@ -29,7 +29,6 @@ class FirebaseAuthModel {
             .addOnSuccessListener { userDocument ->
                 if (userDocument.exists()) {
                     val user = deserializeUser(userDocument.data ?: emptyMap()).copy(id = uid)
-                    Log.d("FirebaseAuthModel", "Restored session for user: ${user.username}")
                     completion(true, user, null)
                 } else {
                     Log.w("FirebaseAuthModel", "Auth session found but Firestore profile missing: $uid")
@@ -75,7 +74,6 @@ class FirebaseAuthModel {
                                             email = newUser.email,
                                             discordTag = newUser.discordTag
                                         )
-                                        Log.d("FirebaseAuthModel", "User created successfully with ID: $uid")
                                         completion(true, user, "Sign up successful!")
                                     }
                                     .addOnFailureListener { exception ->
@@ -109,7 +107,6 @@ class FirebaseAuthModel {
                     .addOnSuccessListener { userDocument ->
                         if (userDocument.exists()) {
                             val user = deserializeUser(userDocument.data ?: emptyMap()).copy(id = uid)
-                            Log.d("FirebaseAuthModel", "User signed in successfully: ${user.username}")
                             completion(true, user, "Sign in successful!")
                         } else {
                             Log.w("FirebaseAuthModel", "Auth succeeded but user profile not found: $uid")
@@ -164,7 +161,6 @@ class FirebaseAuthModel {
                             discordTag = discordTag,
                             profileImage = profileImageUrl ?: currentUser.profileImage
                         )
-                        Log.d("FirebaseAuthModel", "User updated successfully: ${currentUser.id}")
                         completion(true, updatedUser, "Profile updated successfully!")
                     }
                     .addOnFailureListener { exception ->

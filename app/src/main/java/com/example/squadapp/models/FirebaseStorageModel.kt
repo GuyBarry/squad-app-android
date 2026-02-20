@@ -35,7 +35,6 @@ class FirebaseStorageModel {
         }.addOnSuccessListener {
             imageRef.downloadUrl.addOnSuccessListener { downloadUri ->
                 val downloadUrl = downloadUri.toString()
-                Log.d(TAG, "Image uploaded successfully to: $downloadUrl")
                 completion(true, downloadUrl, "Image uploaded successfully")
             }.addOnFailureListener { exception ->
                 val errorMessage = "Failed to get download URL: ${exception.message}"
@@ -77,7 +76,6 @@ class FirebaseStorageModel {
             val imageRef = storage.getReferenceFromUrl(downloadUrl)
             imageRef.delete()
                 .addOnSuccessListener {
-                    Log.d(TAG, "Image deleted successfully: $downloadUrl")
                     completion(true, "Image deleted successfully")
                 }
                 .addOnFailureListener { exception ->
