@@ -20,13 +20,13 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:src="@drawable/ic_game_controller"
-            android:contentDescription="Game Controller"
+            android:contentDescription="@string/game_controller"
             android:layout_marginEnd="12dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sign"
+            android:text="@string/sign"
             android:textSize="32sp"
             android:textStyle="bold"
             android:textColor="@color/primary" />
@@ -34,7 +34,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text=" in"
+            android:text="@string/in"
             android:textSize="32sp"
             android:textStyle="bold"
             android:textColor="@color/white" />
@@ -45,7 +45,8 @@
         android:id="@+id/signin_email"
         android:layout_width="300dp"
         android:layout_height="48dp"
-        android:hint="Email"
+        android:hint="@string/email"
+        android:importantForAutofill="no"
         android:inputType="textEmailAddress"
         android:padding="12dp"
         android:layout_marginBottom="16dp"
@@ -55,7 +56,8 @@
         android:id="@+id/signin_password"
         android:layout_width="300dp"
         android:layout_height="48dp"
-        android:hint="Password"
+        android:hint="@string/password"
+        android:importantForAutofill="no"
         android:inputType="textPassword"
         android:padding="12dp"
         android:layout_marginBottom="32dp"
@@ -65,7 +67,7 @@
         android:id="@+id/signin_button"
         android:layout_width="300dp"
         android:layout_height="48dp"
-        android:text="Sign In"
+        android:text="@string/sign_in"
         android:textSize="16sp"
         android:textColor="@color/button_text_color"
         android:layout_marginBottom="16dp"
@@ -75,7 +77,7 @@
         android:id="@+id/signin_signup_link"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Don't have an account? Sign up here"
+        android:text="@string/don_t_have_an_account_sign_up_here"
         android:textSize="14sp"
         android:textColor="@color/grey"
         android:layout_marginTop="16dp"

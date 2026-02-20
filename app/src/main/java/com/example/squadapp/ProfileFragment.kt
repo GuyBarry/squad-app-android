@@ -128,7 +128,7 @@ class ProfileFragment : Fragment() {
             if (success) {
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(requireContext(), "Failed to delete post: $message", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), getString(R.string.failed_to_delete_post, message), Toast.LENGTH_LONG).show()
             }
         }
     }

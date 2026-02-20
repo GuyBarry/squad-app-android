@@ -52,8 +52,8 @@ class SignInFragment : Fragment() {
     private fun setupSignUpLink() {
         SpannableUtils.setClickableLink(
             textView = signUpLink,
-            fullText = "Don't have an account? Sign up here",
-            clickableSubstring = "Sign up here",
+            fullText = getString(R.string.no_account_sign_up),
+            clickableSubstring = getString(R.string.sign_up_here),
             onClick = { findNavController().navigate(R.id.action_signInFragment_to_signUpFragment) }
         )
     }
@@ -68,7 +68,7 @@ class SignInFragment : Fragment() {
 
         signInViewModel.signInResult.observe(viewLifecycleOwner) { (success, message) ->
             if (success) {
-                Toast.makeText(context, "Sign in successful!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, getString(R.string.sign_in_successful), Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
@@ -99,11 +99,11 @@ class SignInFragment : Fragment() {
 
     private fun validateSignInFields(email: String, password: String): Boolean {
         if (email.isEmpty()) {
-            Toast.makeText(context, "Email cannot be empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.email_cannot_be_empty), Toast.LENGTH_SHORT).show()
             return false
         }
         if (password.isEmpty()) {
-            Toast.makeText(context, "Password cannot be empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.password_cannot_be_empty), Toast.LENGTH_SHORT).show()
             return false
         }
         return true

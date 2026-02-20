@@ -39,4 +39,65 @@
     <string name="edit_post_header">Edit Post</string>
     <string name="update_post">Update Post</string>
     <string name="edit">Edit</string>
+
+    <!-- Camera / image -->
+    <string name="camera_permission_required">Camera permission is required to take photos</string>
+    <string name="error_opening_camera">Error opening camera: %s</string>
+
+    <!-- Edit Profile -->
+    <string name="save_changes">Save Changes</string>
+    <string name="profile_updated_successfully">Profile updated successfully!</string>
+    <string name="failed_to_update_profile">Failed to update profile</string>
+    <string name="no_changes_to_save">No changes to save</string>
+    <string name="username_cannot_be_empty">Username cannot be empty</string>
+    <string name="discord_tag_cannot_be_empty">Discord tag cannot be empty</string>
+
+    <!-- Edit Profile ViewModel progress -->
+    <string name="deleting_image">Deleting image…</string>
+    <string name="uploading_image">Uploading image…</string>
+    <string name="updating_profile">Updating profile…</string>
+    <string name="uploading_progress">Uploading… %d%%</string>
+    <string name="failed_to_delete_image">Failed to delete image: %s</string>
+    <string name="failed_to_upload_image">Failed to upload image: %s</string>
+
+    <!-- Post / Edit Post -->
+    <string name="post_published_successfully">Post published successfully!</string>
+    <string name="post_updated_successfully">Post updated successfully!</string>
+    <string name="please_select_image">Please select or take an image</string>
+    <string name="please_select_game">Please select a game from the list</string>
+    <string name="please_add_description">Please add a description</string>
+    <string name="failed_to_delete_post">Failed to delete post: %s</string>
+
+    <!-- Post / Edit Post ViewModel progress -->
+    <string name="uploading_progress_post">Uploading… %d%%</string>
+    <string name="failed_to_upload_image_post">Failed to upload image: %s</string>
+
+    <!-- Sign In / Sign Up -->
+    <string name="sign_in_successful">Sign in successful!</string>
+    <string name="sign_up_successful">Sign up successful!</string>
+    <string name="email_cannot_be_empty">Email cannot be empty</string>
+    <string name="password_cannot_be_empty">Password cannot be empty</string>
+    <string name="passwords_do_not_match">Passwords do not match</string>
+    <string name="password_too_short">Password must be at least 6 characters</string>
+    <string name="no_account_sign_up">Don\'t have an account? Sign up here</string>
+    <string name="sign_up_here">Sign up here</string>
+    <string name="already_have_account_sign_in">Already have an account? Sign in here</string>
+    <string name="sign_in_here">Sign in here</string>
+
+    <!-- Post Adapter -->
+    <string name="no_platform_information">No platform information</string>
+    <string name="unknown_game">Unknown Game</string>
+    <string name="discord_tag_copied">Discord tag copied!</string>
+    <string name="game_rating_format">★ %.1f</string>
+    <string name="game_controller">Game Controller</string>
+    <string name="sign">Sign</string>
+    <string name="in">in</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="don_t_have_an_account_sign_up_here">Don\'t have an account? Sign up here</string>
+    <string name="up">up</string>
+    <string name="username">Username</string>
+    <string name="discord_tag">Discord Tag</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="already_have_an_account_sign_in_here">Already have an account? Sign in here</string>
 </resources>

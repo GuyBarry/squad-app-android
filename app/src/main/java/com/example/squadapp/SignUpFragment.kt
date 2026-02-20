@@ -58,8 +58,8 @@ class SignUpFragment : Fragment() {
     private fun setupSignInLink() {
         SpannableUtils.setClickableLink(
             textView = signInLink,
-            fullText = "Already have an account? Sign in here",
-            clickableSubstring = "Sign in here",
+            fullText = getString(R.string.already_have_account_sign_in),
+            clickableSubstring = getString(R.string.sign_in_here),
             onClick = { findNavController().navigate(R.id.action_signUpFragment_to_signInFragment) }
         )
     }
@@ -74,7 +74,7 @@ class SignUpFragment : Fragment() {
 
         signUpViewModel.signUpResult.observe(viewLifecycleOwner) { (success, message) ->
             if (success) {
-                Toast.makeText(context, "Sign up successful!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, getString(R.string.sign_up_successful), Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
@@ -118,27 +118,27 @@ class SignUpFragment : Fragment() {
         confirmPassword: String
     ): Boolean {
         if (username.isEmpty()) {
-            Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.username_cannot_be_empty), Toast.LENGTH_SHORT).show()
             return false
         }
         if (email.isEmpty()) {
-            Toast.makeText(context, "Email cannot be empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.email_cannot_be_empty), Toast.LENGTH_SHORT).show()
             return false
         }
         if (discordTag.isEmpty()) {
-            Toast.makeText(context, "Discord tag cannot be empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.discord_tag_cannot_be_empty), Toast.LENGTH_SHORT).show()
             return false
         }
         if (password.isEmpty()) {
-            Toast.makeText(context, "Password cannot be empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.password_cannot_be_empty), Toast.LENGTH_SHORT).show()
             return false
         }
         if (password != confirmPassword) {
-            Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.passwords_do_not_match), Toast.LENGTH_SHORT).show()
             return false
         }
         if (password.length < 6) {
-            Toast.makeText(context, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.password_too_short), Toast.LENGTH_SHORT).show()
             return false
         }
         return true

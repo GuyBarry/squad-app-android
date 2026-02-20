@@ -57,7 +57,7 @@ class EditProfileFragment : Fragment() {
 
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         if (isGranted) launchCamera()
-        else Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_LONG).show()
+        else Toast.makeText(context, getString(R.string.camera_permission_required), Toast.LENGTH_LONG).show()
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -114,18 +114,18 @@ class EditProfileFragment : Fragment() {
         }
 
         editProfileViewModel.saveProgress.observe(viewLifecycleOwner) { progress ->
-            saveBtn.text = progress ?: "Save Changes"
+            saveBtn.text = progress ?: getString(R.string.save_changes)
         }
 
         editProfileViewModel.saveResult.observe(viewLifecycleOwner) { (success, updatedUser, message) ->
             if (success && updatedUser != null) {
                 (activity as? MainActivity)?.onUserUpdated(updatedUser)
-                Toast.makeText(context, message ?: "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, message ?: getString(R.string.profile_updated_successfully), Toast.LENGTH_SHORT).show()
                 val action = EditProfileFragmentDirections
                     .actionEditProfileFragmentToProfileFragment(user = updatedUser)
                 findNavController().navigate(action)
             } else {
-                Toast.makeText(context, message ?: "Failed to update profile", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, message ?: getString(R.string.failed_to_update_profile), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -146,7 +146,7 @@ class EditProfileFragment : Fragment() {
             takePictureLauncher.launch(CameraUtils.buildCameraIntent(selectedImageUri!!))
         } catch (ex: Exception) {
             Log.e("EditProfileFragment", "Error opening camera", ex)
-            Toast.makeText(context, "Error opening camera: ${ex.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, getString(R.string.error_opening_camera, ex.message), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -216,7 +216,7 @@ class EditProfileFragment : Fragment() {
         if (!validateInputFields(newUsername, newDiscordTag)) return
 
         if (hasNoChanges(currentUser, newUsername, newDiscordTag)) {
-            Toast.makeText(context, "No changes to save", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.no_changes_to_save), Toast.LENGTH_SHORT).show()
             findNavController().popBackStack()
             return
         }
@@ -229,11 +229,11 @@ class EditProfileFragment : Fragment() {
 
     private fun validateInputFields(username: String, discordTag: String): Boolean {
         if (username.isEmpty()) {
-            Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.username_cannot_be_empty), Toast.LENGTH_SHORT).show()
             return false
         }
         if (discordTag.isEmpty()) {
-            Toast.makeText(context, "Discord tag cannot be empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.discord_tag_cannot_be_empty), Toast.LENGTH_SHORT).show()
             return false
         }
         return true

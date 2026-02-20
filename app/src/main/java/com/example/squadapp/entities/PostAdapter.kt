@@ -3,7 +3,6 @@ package com.example.squadapp.entities
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -96,7 +95,7 @@ class PostAdapter(
 
                     // Set game rating
                     if (rawgGame.rating != null && rawgGame.rating > 0) {
-                        gameRating.text = "★ ${String.format(Locale.US, "%.1f", rawgGame.rating)}"
+                        gameRating.text = String.format(Locale.US, itemView.context.getString(R.string.game_rating_format), rawgGame.rating)
                     } else {
                         gameRating.text = ""
                     }
@@ -106,13 +105,13 @@ class PostAdapter(
                     if (platforms.isNotEmpty()) {
                         gamePlatforms.text = platforms.joinToString(", ")
                     } else {
-                        gamePlatforms.text = "No platform information"
+                        gamePlatforms.text = itemView.context.getString(R.string.no_platform_information)
                     }
                 } else {
                     // Fallback if game data couldn't be fetched
-                    gameName.text = "Unknown Game"
+                    gameName.text = itemView.context.getString(R.string.unknown_game)
                     gameRating.text = ""
-                    gamePlatforms.text = "No platform information"
+                    gamePlatforms.text = itemView.context.getString(R.string.no_platform_information)
                 }
             }
 
@@ -123,7 +122,7 @@ class PostAdapter(
                 val clip = ClipData.newPlainText("Discord Tag", post.user.discordTag)
                 clipboard.setPrimaryClip(clip)
                 // Optional: Show a toast message
-                Toast.makeText(itemView.context, "Discord tag copied!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(itemView.context, itemView.context.getString(R.string.discord_tag_copied), Toast.LENGTH_SHORT).show()
             }
 
             // Profile mode: show edit + delete, hide copy discord

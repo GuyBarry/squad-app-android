@@ -80,7 +80,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) launchCamera()
-        else Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_LONG).show()
+        else Toast.makeText(context, getString(R.string.camera_permission_required), Toast.LENGTH_LONG).show()
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -179,7 +179,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
 
         postViewModel.publishResult.observe(viewLifecycleOwner) { (success, message) ->
             if (success) {
-                Toast.makeText(context, "Post published successfully!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, getString(R.string.post_published_successfully), Toast.LENGTH_SHORT).show()
                 navigateToHome()
             } else {
                 Toast.makeText(context, message, Toast.LENGTH_LONG).show()
@@ -215,7 +215,7 @@ class PostFragment : Fragment(R.layout.fragment_post) {
             takePictureLauncher.launch(CameraUtils.buildCameraIntent(selectedImageUri!!))
         } catch (ex: Exception) {
             Log.e("PostFragment", "Error opening camera", ex)
-            Toast.makeText(context, "Error opening camera: ${ex.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, getString(R.string.error_opening_camera, ex.message), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -271,15 +271,15 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         val description = descriptionInput.text.toString()
 
         if (selectedImageUri == null) {
-            Toast.makeText(context, "Please select or take an image", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, getString(R.string.please_select_image), Toast.LENGTH_LONG).show()
             return
         }
         if (postViewModel.selectedGame == null) {
-            Toast.makeText(context, "Please select a game from the list", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.please_select_game), Toast.LENGTH_SHORT).show()
             return
         }
         if (description.isEmpty()) {
-            Toast.makeText(context, "Please add a description", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.please_add_description), Toast.LENGTH_SHORT).show()
             return
         }
 

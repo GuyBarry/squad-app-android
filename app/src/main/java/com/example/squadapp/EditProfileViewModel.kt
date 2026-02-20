@@ -1,17 +1,18 @@
 package com.example.squadapp
 
+import android.app.Application
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.example.squadapp.entities.User
 import com.example.squadapp.models.Model
 
 /**
  * EditProfileViewModel - Manages profile editing: image upload/delete and user data update.
  */
-class EditProfileViewModel : ViewModel() {
+class EditProfileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _isSaving = MutableLiveData<Boolean>(false)
     val isSaving: LiveData<Boolean> = _isSaving
@@ -31,44 +32,45 @@ class EditProfileViewModel : ViewModel() {
         isImageDeleted: Boolean,
         originalImageUrl: String
     ) {
+        val ctx = getApplication<Application>()
         _isSaving.value = true
 
         when {
             isImageDeleted && originalImageUrl.isNotEmpty() -> {
-                _saveProgress.value = "Deleting image..."
+                _saveProgress.value = ctx.getString(R.string.deleting_image)
                 Log.d("EditProfileViewModel", "Deleting profile image...")
                 Model.shared.deletePicture(originalImageUrl) { success, message ->
                     if (success) {
-                        _saveProgress.postValue("Updating profile...")
+                        _saveProgress.postValue(ctx.getString(R.string.updating_profile))
                         updateProfile(currentUser, newUsername, newDiscordTag, "")
                     } else {
                         _isSaving.postValue(false)
                         _saveProgress.postValue(null)
                         Log.e("EditProfileViewModel", "Failed to delete image: $message")
-                        _saveResult.postValue(Triple(false, null, "Failed to delete image: $message"))
+                        _saveResult.postValue(Triple(false, null, ctx.getString(R.string.failed_to_delete_image, message)))
                     }
                 }
             }
 
             selectedImageUri != null -> {
-                _saveProgress.value = "Uploading image..."
+                _saveProgress.value = ctx.getString(R.string.uploading_image)
                 Log.d("EditProfileViewModel", "Uploading profile image...")
                 Model.shared.uploadProfilePicture(
                     selectedImageUri,
                     currentUser.id,
                     { success, downloadUrl, message ->
                         if (success && downloadUrl != null) {
-                            _saveProgress.postValue("Updating profile...")
+                            _saveProgress.postValue(ctx.getString(R.string.updating_profile))
                             updateProfile(currentUser, newUsername, newDiscordTag, downloadUrl)
                         } else {
                             _isSaving.postValue(false)
                             _saveProgress.postValue(null)
                             Log.e("EditProfileViewModel", "Failed to upload image: $message")
-                            _saveResult.postValue(Triple(false, null, "Failed to upload image: $message"))
+                            _saveResult.postValue(Triple(false, null, ctx.getString(R.string.failed_to_upload_image, message)))
                         }
                     },
                     onProgress = { progress ->
-                        _saveProgress.postValue("Uploading... $progress%")
+                        _saveProgress.postValue(ctx.getString(R.string.uploading_progress, progress))
                     }
                 )
             }
@@ -92,4 +94,3 @@ class EditProfileViewModel : ViewModel() {
         }
     }
 }
-

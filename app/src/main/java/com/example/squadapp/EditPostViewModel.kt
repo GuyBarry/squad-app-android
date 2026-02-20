@@ -1,10 +1,11 @@
 package com.example.squadapp
 
+import android.app.Application
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.example.squadapp.entities.Post
 import com.example.squadapp.entities.RawgGame
 import com.example.squadapp.models.Model
@@ -12,7 +13,7 @@ import com.example.squadapp.models.Model
 /**
  * EditPostViewModel - Manages game search and post editing logic.
  */
-class EditPostViewModel : ViewModel() {
+class EditPostViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _games = MutableLiveData<List<RawgGame>>()
     val games: LiveData<List<RawgGame>> = _games
@@ -66,6 +67,7 @@ class EditPostViewModel : ViewModel() {
         description: String
     ) {
         val game = selectedGame ?: return
+        val ctx = getApplication<Application>()
         _isPublishing.value = true
         _publishProgress.value = null
 
@@ -96,12 +98,12 @@ class EditPostViewModel : ViewModel() {
                         Log.e("EditPostViewModel", "Image upload failed: $message")
                         _isPublishing.postValue(false)
                         _publishProgress.postValue(null)
-                        _publishResult.postValue(Pair(false, "Failed to upload image: $message"))
+                        _publishResult.postValue(Pair(false, ctx.getString(R.string.failed_to_upload_image_post, message)))
                     }
                 },
                 onProgress = { progress ->
                     Log.d("EditPostViewModel", "Upload progress: $progress%")
-                    _publishProgress.postValue("Uploading... $progress%")
+                    _publishProgress.postValue(ctx.getString(R.string.uploading_progress_post, progress))
                 }
             )
         } else {
@@ -118,4 +120,3 @@ class EditPostViewModel : ViewModel() {
         }
     }
 }
-
