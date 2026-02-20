@@ -180,7 +180,6 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         postViewModel.publishResult.observe(viewLifecycleOwner) { (success, message) ->
             if (success) {
                 Toast.makeText(context, "Post published successfully!", Toast.LENGTH_SHORT).show()
-                resetForm()
                 navigateToHome()
             } else {
                 Toast.makeText(context, message, Toast.LENGTH_LONG).show()
@@ -291,19 +290,5 @@ class PostFragment : Fragment(R.layout.fragment_post) {
         findNavController().navigate(R.id.homeFragment, HomeFragmentArgs(user = args.user).toBundle())
         activity?.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottom_navigation)
             ?.selectedItemId = R.id.nav_home
-    }
-
-    private fun resetForm() {
-        selectedImageUri = null
-        imagePreview.setImageBitmap(null)
-        imagePreview.visibility = View.GONE
-        cancelImageButton.visibility = View.GONE
-        imagePlaceholder.visibility = View.VISIBLE
-        gameSearchInput.text?.clear()
-        val size = displayedGames.size
-        displayedGames.clear()
-        if (size > 0) gameListAdapter.notifyItemRangeRemoved(0, size)
-        postViewModel.selectedGame = null
-        descriptionInput.text?.clear()
     }
 }
