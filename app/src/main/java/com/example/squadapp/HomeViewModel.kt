@@ -21,5 +21,13 @@ class HomeViewModel : ViewModel() {
             _isLoading.postValue(false)
         }
     }
+
+    fun refreshPosts() {
+        _isLoading.value = true
+        Model.shared.refreshPosts { postList ->
+            _posts.postValue(postList)
+            _isLoading.postValue(false)
+        }
+    }
 }
 

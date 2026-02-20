@@ -34,7 +34,7 @@ class HomeFragment : Fragment() {
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout)
 
         swipeRefreshLayout?.setOnRefreshListener {
-            homeViewModel.loadPosts()
+            homeViewModel.refreshPosts()
         }
 
         homeViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
@@ -52,7 +52,7 @@ class HomeFragment : Fragment() {
             recyclerView?.adapter = PostAdapter(posts)
         }
 
-        homeViewModel.loadPosts()
+        homeViewModel.refreshPosts()
     }
 
     override fun onResume() {
