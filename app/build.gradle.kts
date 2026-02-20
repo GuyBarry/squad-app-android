@@ -97,4 +97,7 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.lifecycle.livedata.ktx)
     implementation(libs.lifecycle.runtime.ktx)
+
+    // SwipeRefreshLayout for pull-to-refresh
+    implementation(libs.androidx.swiperefreshlayout)
 }
