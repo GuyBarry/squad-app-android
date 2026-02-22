@@ -100,7 +100,7 @@ class Model private constructor() {
                     val entity = GameEntity(
                         id = fetchedGame.id,
                         name = fetchedGame.name,
-                        rating = 0.0,
+                        rating = fetchedGame.rating,
                         platforms = fetchedGame.platforms.joinToString(",")
                     )
                     CoroutineScope(Dispatchers.IO).launch { roomLocalModel.saveGame(entity) }
